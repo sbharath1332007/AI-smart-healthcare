@@ -328,7 +328,10 @@
                     <p id="disclaimerText" class="leading-relaxed"></p>
                     <div class="flex flex-wrap justify-end items-center pt-2 border-t border-slate-200">
                         <div class="flex space-x-2">
-                            <button onclick="window.print()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center">
+                            <button onclick="downloadCurrentAnalysisPDF()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center shadow-sm">
+                                <i data-lucide="file-down" class="w-3.5 h-3.5 mr-1.5"></i> Download PDF Report
+                            </button>
+                            <button onclick="window.print()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center text-xs">
                                 <i data-lucide="printer" class="w-3.5 h-3.5 mr-1"></i> Print / Save PDF
                             </button>
                         </div>
@@ -572,5 +575,20 @@
         // Smooth scroll to results
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    function downloadCurrentAnalysisPDF() {
+        const element = document.getElementById('resultsContainer');
+        const condName = document.getElementById('resultConditionName').innerText.replace(/\s+/g, '_');
+        const opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     `Clinical_Care_Plan_${condName}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 {% endblock %}

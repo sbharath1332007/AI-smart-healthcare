@@ -101,7 +101,48 @@ def api_analyze():
 @login_required
 def dashboard():
     consultations = get_user_consultations(session["user_id"])
-    return render_template("dashboard.html", consultations=consultations)
+    return render_template(
+        "dashboard.html",
+        consultations=consultations,
+        patient_name=session.get("full_name"),
+        username=session.get("username"),
+        profile=session.get("profile", {})
+    )
+
+
+@app.route("/record/<int:record_id>/print")
+@login_required
+def print_medical_record(record_id):
+    consultations = get_user_consultations(session["user_id"])
+    target = None
+    for c in consultations:
+        if c["id"] == record_id:
+            target = c
+            break
+    if not target:
+        flash("Medical record not found.", "danger")
+        return redirect(url_for("dashboard"))
+    
+    return render_template(
+        "medical_report.html",
+        record=target,
+        patient_name=session.get("full_name"),
+        username=session.get("username"),
+        profile=session.get("profile", {})
+    )
+
+
+@app.route("/dossier/print")
+@login_required
+def print_complete_dossier():
+    consultations = get_user_consultations(session["user_id"])
+    return render_template(
+        "medical_dossier.html",
+        consultations=consultations,
+        patient_name=session.get("full_name"),
+        username=session.get("username"),
+        profile=session.get("profile", {})
+    )
 
 
 @app.route("/privacy")

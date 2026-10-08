@@ -188,6 +188,49 @@ class TestAISmartHealthcare(unittest.TestCase):
         self.assertIn("diet", data["primary_condition"])
         self.assertIn("lifestyle", data["primary_condition"])
 
+    def test_11_pdf_and_dossier_routes(self):
+        """Test PDF-ready medical report and comprehensive dossier endpoints."""
+        uname = "pdf_test_patient"
+        pwd = "SecretPassword!123"
+        register_user(uname, pwd, "Alex Patient", {"age": "45", "gender": "Male"})
+        user = authenticate_user(uname, pwd)
+
+        cid = save_consultation(
+            user_id=user["id"],
+            symptoms_text="Severe acid reflux and sour burping",
+            diagnosis_data={
+                "primary": {
+                    "name": "GERD",
+                    "category": "Gastroenterology",
+                    "specialist": "Gastroenterologist",
+                    "confidence_score": 92.0,
+                    "explanation": "Acid splashing back into esophagus",
+                    "solutions": ["Elevate bed head"]
+                },
+                "symptoms": ["heartburn"]
+            },
+            diet_data={"guideline": "Low-acid Mediterranean diet", "foods_to_eat": ["Oats"], "foods_to_avoid": ["Chili"]},
+            lifestyle_data={"exercise": "Walking", "sleep": "Left side"},
+            urgency_level="Routine"
+        )
+
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user["id"]
+            sess["username"] = user["username"]
+            sess["full_name"] = user["full_name"]
+            sess["profile"] = user["profile"]
+
+        # Test individual PDF report view
+        r_rec = self.client.get(f"/record/{cid}/print")
+        self.assertEqual(r_rec.status_code, 200)
+        self.assertIn(b"Clinical Evaluation", r_rec.data)
+        self.assertIn(b"Alex Patient", r_rec.data)
+
+        # Test full dossier view
+        r_dos = self.client.get("/dossier/print")
+        self.assertEqual(r_dos.status_code, 200)
+        self.assertIn(b"PATIENT HEALTH DOSSIER", r_dos.data)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Health Report - {{ patient_name }} - #{{ record.id }}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2pdf.js for client-side direct PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-shadow-none { box-shadow: none !important; }
+            .page-break-inside-avoid { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen py-6 print:py-0">
+
+    <!-- Floating Action Toolbar (Hidden during print / in PDF) -->
+    <div class="no-print max-w-4xl mx-auto mb-6 px-4 flex flex-wrap justify-between items-center gap-3">
+        <a href="/dashboard" class="inline-flex items-center text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white px-3.5 py-2 rounded-xl border border-slate-300 shadow-sm transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i> Back to Health Records
+        </a>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="downloadAsPDF()" class="inline-flex items-center text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl shadow-sm shadow-emerald-600/30 transition-all">
+                <i data-lucide="file-down" class="w-4 h-4 mr-1.5"></i> Download PDF Document
+            </button>
+            <button onclick="window.print()" class="inline-flex items-center text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 px-4 py-2 rounded-xl border border-slate-300 shadow-sm transition-colors">
+                <i data-lucide="printer" class="w-4 h-4 mr-1.5"></i> Print Document
+            </button>
+        </div>
+    </div>
+
+    <!-- Official Medical Report Document Container -->
+    <div id="medicalReportDocument" class="max-w-4xl mx-auto bg-white border border-slate-200 print:border-none rounded-2xl print:rounded-none shadow-xl print:shadow-none p-8 sm:p-12 space-y-8">
+        
+        <!-- Document Header / Letterhead -->
+        <div class="border-b-2 border-slate-800 pb-6">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+                        <i data-lucide="activity" class="w-7 h-7 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-extrabold tracking-tight text-slate-900 uppercase">AI Smart Healthcare</h1>
+                        <p class="text-xs font-semibold text-emerald-600 tracking-wider uppercase">Clinical Evaluation & Care Plan Report</p>
+                    </div>
+                </div>
+                <div class="text-right text-xs text-slate-500 space-y-0.5">
+                    <p class="font-bold text-slate-900 font-mono">REPORT #CR-{{ record.id }}-{{ record.created_at[:10] }}</p>
+                    <p>Examination Date: {{ record.created_at }}</p>
+                    <p>Status: <span class="text-emerald-600 font-bold">Official Clinical Record</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Demographics & Vitals Box -->
+        <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Patient Name</span>
+                <span class="font-bold text-slate-900 text-sm">{{ patient_name }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Age / Gender</span>
+                <span class="font-semibold text-slate-800">{{ profile.age or 'Not provided' }} yrs / {{ profile.gender or 'Not specified' }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Medical History</span>
+                <span class="font-semibold text-slate-800">{{ profile.preexisting or 'None reported' }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Urgency Level</span>
+                <span class="inline-block mt-0.5 px-2.5 py-0.5 rounded font-bold text-[11px] {% if record.urgency == 'Emergency' %}bg-rose-100 text-rose-800{% elif record.urgency == 'Urgent' %}bg-amber-100 text-amber-800{% else %}bg-emerald-100 text-emerald-800{% endif %}">
+                    {{ record.urgency }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Section 1: Chief Complaint & Symptoms Presentation -->
+        <div class="space-y-2 page-break-inside-avoid">
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+                <i data-lucide="clipboard" class="w-4 h-4 text-brand-600"></i>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">1. Chief Complaint & Clinical Presentation</h2>
+            </div>
+            <div class="p-3.5 bg-slate-50/70 border border-slate-200 rounded-lg text-xs leading-relaxed text-slate-700">
+                <p><strong>Reported Patient Narrative:</strong> {{ record.symptoms }}</p>
+                {% if record.diagnosis.symptoms %}
+                <div class="mt-2 pt-2 border-t border-slate-200 flex flex-wrap gap-1.5 items-center">
+                    <span class="text-[11px] font-semibold text-slate-500">Extracted Symptoms:</span>
+                    {% for sym in record.diagnosis.symptoms %}
+                    <span class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700">{{ sym }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section 2: AI Diagnostic Assessment & Pathophysiology -->
+        {% if record.diagnosis.primary %}
+        <div class="space-y-3 page-break-inside-avoid">
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+                <i data-lucide="stethoscope" class="w-4 h-4 text-brand-600"></i>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">2. Clinical Diagnostic Assessment</h2>
+            </div>
+            <div class="bg-blue-50/40 border border-blue-200/80 rounded-xl p-4 space-y-3 text-xs">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-blue-700">{{ record.diagnosis.primary.category }}</span>
+                        <h3 class="text-base font-extrabold text-slate-900">{{ record.diagnosis.primary.name }}</h3>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">
+                            Confidence Index: {{ record.diagnosis.primary.confidence_score }}%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="font-bold text-slate-800 text-[11px] uppercase tracking-wide block">Underlying Pathophysiology & Mechanism:</span>
+                    <p class="text-slate-700 leading-relaxed text-xs">
+                        {{ record.diagnosis.primary.explanation }}
+                    </p>
+                </div>
+
+                {% if record.diagnosis.ai_notes %}
+                <div class="p-3 bg-white rounded-lg border border-blue-200 text-slate-700 space-y-1">
+                    <span class="font-bold text-indigo-900 text-[11px] flex items-center">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1 text-indigo-600"></i> Clinical Reasoning Notes:
+                    </span>
+                    <p class="text-[11px] leading-relaxed">{{ record.diagnosis.ai_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section 3: Recommended Interventions & Action Plan -->
+        <div class="space-y-2 page-break-inside-avoid">
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+                <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">3. Medical Solutions & Specialist Referral</h2>
+            </div>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs">
+                <div class="flex items-center text-slate-800">
+                    <strong class="mr-2">Recommended Specialist:</strong>
+                    <span class="px-2.5 py-0.5 bg-brand-50 border border-brand-200 rounded font-bold text-brand-900">
+                        {{ record.diagnosis.primary.specialist }}
+                    </span>
+                </div>
+                <div class="space-y-1.5">
+                    <strong class="text-slate-800 block text-[11px] uppercase">Clinical Action Steps:</strong>
+                    <ul class="space-y-1 text-slate-700">
+                        {% for sol in record.diagnosis.primary.solutions %}
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-600 font-bold">&bull;</span>
+                            <span>{{ sol }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 4: Tailored Dietary & Nutritional Prescription -->
+        {% if record.diet %}
+        <div class="space-y-2 page-break-inside-avoid">
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+                <i data-lucide="utensils" class="w-4 h-4 text-emerald-600"></i>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">4. Tailored Dietary & Nutritional Prescription</h2>
+            </div>
+            <div class="bg-emerald-50/30 border border-emerald-200/80 rounded-xl p-4 space-y-3 text-xs">
+                <div class="p-2.5 bg-emerald-100/60 rounded-lg text-emerald-950 font-medium">
+                    <strong>Primary Guideline:</strong> {{ record.diet.guideline }}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Foods to Eat -->
+                    <div class="p-3 bg-white border border-emerald-200 rounded-lg space-y-1.5">
+                        <span class="font-bold text-emerald-800 text-[11px] uppercase flex items-center">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i> Recommended Healing Foods
+                        </span>
+                        <ul class="space-y-1 text-slate-700 text-[11px]">
+                            {% for f in record.diet.foods_to_eat %}
+                            <li class="flex items-start space-x-1.5">
+                                <span class="text-emerald-500 font-bold">+</span>
+                                <span>{{ f }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Foods to Avoid -->
+                    <div class="p-3 bg-white border border-rose-200 rounded-lg space-y-1.5">
+                        <span class="font-bold text-rose-800 text-[11px] uppercase flex items-center">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 mr-1 text-rose-600"></i> Restricted / Trigger Foods
+                        </span>
+                        <ul class="space-y-1 text-slate-700 text-[11px]">
+                            {% for f in record.diet.foods_to_avoid %}
+                            <li class="flex items-start space-x-1.5">
+                                <span class="text-rose-500 font-bold">-</span>
+                                <span>{{ f }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1 text-[11px]">
+                    <div class="p-2 bg-white border border-slate-200 rounded">
+                        <strong>Meal Timing:</strong> {{ record.diet.meal_timing }}
+                    </div>
+                    <div class="p-2 bg-white border border-slate-200 rounded">
+                        <strong>Hydration:</strong> {{ record.diet.hydration }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 5: Lifestyle Medicine & Physical Conditioning Plan -->
+        {% if record.lifestyle %}
+        <div class="space-y-2 page-break-inside-avoid">
+            <div class="flex items-center space-x-2 border-b border-slate-200 pb-1.5">
+                <i data-lucide="heart-pulse" class="w-4 h-4 text-purple-600"></i>
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-900">5. Lifestyle Medicine & Recovery Plan</h2>
+            </div>
+            <div class="bg-purple-50/30 border border-purple-200/80 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div class="p-3 bg-white border border-purple-200/60 rounded-lg">
+                    <strong class="block text-slate-900 mb-1">Physical Activity / Movement:</strong>
+                    <p class="text-slate-600 text-[11px] leading-relaxed">{{ record.lifestyle.exercise }}</p>
+                </div>
+                <div class="p-3 bg-white border border-purple-200/60 rounded-lg">
+                    <strong class="block text-slate-900 mb-1">Sleep & Ergonomics:</strong>
+                    <p class="text-slate-600 text-[11px] leading-relaxed">{{ record.lifestyle.sleep }}</p>
+                </div>
+                <div class="p-3 bg-white border border-purple-200/60 rounded-lg">
+                    <strong class="block text-slate-900 mb-1">Stress Modulation:</strong>
+                    <p class="text-slate-600 text-[11px] leading-relaxed">{{ record.lifestyle.stress_management }}</p>
+                </div>
+                <div class="p-3 bg-white border border-purple-200/60 rounded-lg">
+                    <strong class="block text-slate-900 mb-1">Habit Adjustments:</strong>
+                    <p class="text-slate-600 text-[11px] leading-relaxed">{{ record.lifestyle.habits }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Document Signoff & Medical Disclaimer -->
+        <div class="pt-6 border-t-2 border-slate-200 text-xs text-slate-500 space-y-4 page-break-inside-avoid">
+            <p class="text-[10px] leading-relaxed text-slate-400">
+                <strong>CLINICAL DISCLAIMER:</strong> This evaluation report was synthesized by the AI Smart Healthcare Clinical Knowledge Engine. It serves as an educational decision-support document and is not a definitive laboratory prescription. Patients experiencing acute deteriorating symptoms should seek immediate emergency medical care.
+            </p>
+
+            <div class="flex justify-between items-end pt-4">
+                <div>
+                    <span class="block text-[10px] uppercase font-bold text-slate-400">System Verification</span>
+                    <span class="font-bold text-slate-900">AI Smart Healthcare Engine v2.4</span>
+                    <span class="block text-[10px] text-emerald-600">Verified Clinical Evidence Base</span>
+                </div>
+                <div class="text-right">
+                    <div class="w-36 border-b border-slate-400 mb-1"></div>
+                    <span class="text-[10px] text-slate-500">Patient Electronic Record Stamp</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function downloadAsPDF() {
+            const element = document.getElementById('medicalReportDocument');
+            const patientName = "{{ patient_name }}".replace(/\s+/g, '_');
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Medical_Report_${patientName}_#{{ record.id }}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Run html2pdf download
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
