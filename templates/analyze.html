@@ -7,8 +7,8 @@
     <!-- Header -->
     <div class="mb-8 text-center sm:text-left">
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-2">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
-            <span>Encrypted Health Intake Protocol</span>
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-brand-600"></i>
+            <span>Clinical Intelligence System</span>
         </div>
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI Clinical Symptom Checker & Care Planner</h1>
         <p class="text-sm text-slate-600 mt-1 max-w-2xl">
@@ -122,27 +122,6 @@
                         <option value="Over a month / Chronic">Over a month (Chronic)</option>
                     </select>
                 </div>
-            </div>
-
-            <!-- Privacy Controls -->
-            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div class="font-bold text-slate-900 flex items-center">
-                    <i data-lucide="lock" class="w-4 h-4 mr-1.5 text-emerald-600"></i> Privacy & Data Protection
-                </div>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="anonymizeToggle" class="rounded text-brand-600 focus:ring-brand-500">
-                    <span class="text-slate-700">Anonymize consultation (auto-redact any names/emails/phones)</span>
-                </label>
-                {% if current_user %}
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="saveVaultToggle" checked class="rounded text-brand-600 focus:ring-brand-500">
-                    <span class="text-slate-700">Encrypt and save this consultation to my personal Health Vault</span>
-                </label>
-                {% else %}
-                <p class="text-[11px] text-slate-500">
-                    Guest session: results are computed live. <a href="/auth/register" class="text-brand-600 underline font-semibold">Sign up</a> to save records in your AES-256 encrypted vault.
-                </p>
-                {% endif %}
             </div>
 
             <!-- Submit Button -->
@@ -347,11 +326,8 @@
                 <!-- Medical Disclaimer & Actions -->
                 <div class="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-500 space-y-3">
                     <p id="disclaimerText" class="leading-relaxed"></p>
-                    <div class="flex flex-wrap justify-between items-center pt-2 border-t border-slate-200">
-                        <span class="flex items-center text-emerald-700 font-semibold">
-                            <i data-lucide="lock" class="w-3.5 h-3.5 mr-1"></i> Data Protection: AES-256 Field Encrypted
-                        </span>
-                        <div class="flex space-x-2 mt-2 sm:mt-0">
+                    <div class="flex flex-wrap justify-end items-center pt-2 border-t border-slate-200">
+                        <div class="flex space-x-2">
                             <button onclick="window.print()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center">
                                 <i data-lucide="printer" class="w-3.5 h-3.5 mr-1"></i> Print / Save PDF
                             </button>
@@ -453,8 +429,8 @@
             preexisting: document.getElementById('patientPreexisting').value,
             severity: document.getElementById('severityRange').value,
             duration: document.getElementById('durationSelect').value,
-            anonymize_mode: document.getElementById('anonymizeToggle').checked,
-            save_to_vault: document.getElementById('saveVaultToggle') ? document.getElementById('saveVaultToggle').checked : false
+            anonymize_mode: false,
+            save_to_vault: true
         };
 
         try {

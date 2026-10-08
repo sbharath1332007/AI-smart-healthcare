@@ -8,7 +8,7 @@
             <div class="lg:col-span-7 space-y-6">
                 <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-100/80 border border-emerald-300 text-emerald-800 text-xs font-semibold">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>AI-Powered Medical Decision Support & Privacy Vault</span>
+                    <span>AI-Powered Medical Decision Support & Care Planner</span>
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
                     Enter Your Symptoms. <br/>
@@ -17,7 +17,7 @@
                     </span>
                 </h1>
                 <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
-                    Describe what you're experiencing in plain language. Our clinical intelligence engine analyzes your condition, reveals root causes, provides medical roadmaps, customizes diets and lifestyle habits—all while keeping your personal health data <strong>100% encrypted with AES-256</strong>.
+                    Describe what you're experiencing in plain language. Our clinical intelligence engine analyzes your condition, reveals root causes, provides medical roadmaps, customizes diets and lifestyle habits designed to guide your recovery.
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
@@ -27,12 +27,12 @@
                     </a>
                     {% if not current_user %}
                     <a href="/auth/register" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 shadow-sm transition-all">
-                        <i data-lucide="lock" class="w-5 h-5 mr-2 text-emerald-600"></i>
-                        Create Encrypted Vault
+                        <i data-lucide="user-plus" class="w-5 h-5 mr-2 text-brand-600"></i>
+                        Create Account
                     </a>
                     {% else %}
                     <a href="/dashboard" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 shadow-sm transition-all">
-                        <i data-lucide="folder-lock" class="w-5 h-5 mr-2 text-brand-600"></i>
+                        <i data-lucide="folder" class="w-5 h-5 mr-2 text-brand-600"></i>
                         View My Consultations
                     </a>
                     {% endif %}
@@ -45,12 +45,12 @@
                         <div class="text-slate-500">Clinical Conditions & Triage</div>
                     </div>
                     <div>
-                        <div class="font-bold text-emerald-600 text-base">AES-256</div>
-                        <div class="text-slate-500">Fernet Encryption At Rest</div>
+                        <div class="font-bold text-emerald-600 text-base">Personalized</div>
+                        <div class="text-slate-500">Tailored Diet Protocols</div>
                     </div>
                     <div>
-                        <div class="font-bold text-brand-600 text-base">100%</div>
-                        <div class="text-slate-500">Patient Privacy Protected</div>
+                        <div class="font-bold text-brand-600 text-base">Instant</div>
+                        <div class="text-slate-500">Symptom Evaluation</div>
                     </div>
                 </div>
             </div>
@@ -61,10 +61,10 @@
                     <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                         <div class="flex items-center space-x-3">
                             <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                                <i data-lucide="activity" class="w-5 h-5"></i>
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold text-slate-900">Encrypted Clinical Report</h3>
+                                <h3 class="text-sm font-bold text-slate-900">Clinical Health Assessment</h3>
                                 <p class="text-[11px] text-slate-500">Generated in real-time</p>
                             </div>
                         </div>
@@ -106,9 +106,9 @@
 
                     <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                         <span class="flex items-center text-emerald-600 font-semibold">
-                            <i data-lucide="lock" class="w-3 h-3 mr-1"></i> AES-256 Vault Protected
+                            <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Clinical Protocol
                         </span>
-                        <span>Zero third-party tracking</span>
+                        <span>Personalized Recommendations</span>
                     </div>
                 </div>
             </div>
@@ -122,7 +122,7 @@
         <div class="text-center max-w-3xl mx-auto mb-16">
             <h2 class="text-xs font-bold uppercase tracking-wider text-brand-600 mb-2">Complete Healthcare Ecosystem</h2>
             <p class="text-3xl font-extrabold text-slate-900 tracking-tight">Four Integrated Medical Pillars</p>
-            <p class="text-sm text-slate-600 mt-2">Engineered to detect, explain, resolve, and safeguard your entire clinical journey.</p>
+            <p class="text-sm text-slate-600 mt-2">Engineered to detect, explain, resolve, and support your entire clinical journey.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -162,11 +162,11 @@
             <!-- Feature 4 -->
             <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-purple-300 transition-all group">
                 <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                    <i data-lucide="history" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">4. User Data Protected</h3>
+                <h3 class="text-base font-bold text-slate-900 mb-2">4. Health History Records</h3>
                 <p class="text-xs text-slate-600 leading-relaxed">
-                    Protected Health Information (PHI) encrypted with AES-256 Fernet, PBKDF2 salted password hashing, audit logs, and Right to be Forgotten data purge.
+                    Easily store, track, and review your past symptom consultations, recovery roadmaps, and dietary prescriptions in one personal dashboard.
                 </p>
             </div>
         </div>
