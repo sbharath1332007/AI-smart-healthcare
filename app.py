@@ -133,8 +133,14 @@ def register():
 
         success, msg = register_user(username, password, full_name, profile_data)
         if success:
-            flash("Registration successful! Your health profile is encrypted with AES-256. Please log in.", "success")
-            return redirect(url_for("login"))
+            user = authenticate_user(username, password)
+            if user:
+                session["user_id"] = user["id"]
+                session["username"] = user["username"]
+                session["full_name"] = user["full_name"]
+                session["profile"] = user["profile"]
+            flash(f"Welcome, {full_name}! Your encrypted health account has been created.", "success")
+            return redirect(url_for("analyze_page"))
         else:
             flash(f"Registration failed: {msg}", "danger")
 
