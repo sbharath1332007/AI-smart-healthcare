@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Smart Healthcare - Clinical Assistant & Encrypted Health Vault{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                        },
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 antialiased">
+    <!-- Top Security & Privacy Banner -->
+    <div class="bg-slate-900 text-slate-300 px-4 py-2 text-xs flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-700/50">
+                <i data-lucide="shield-check" class="w-3 h-3 mr-1 text-emerald-400"></i> AES-256 E2EE Enabled
+            </span>
+            <span class="hidden sm:inline text-slate-400">Protected Health Information (PHI) encrypted with Fernet symmetric cryptography</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="/privacy" class="hover:text-emerald-400 transition-colors flex items-center">
+                <i data-lucide="lock" class="w-3 h-3 mr-1"></i> Privacy Center
+            </a>
+            <span class="text-slate-600">|</span>
+            <span class="text-amber-400 font-medium flex items-center">
+                <i data-lucide="phone-call" class="w-3 h-3 mr-1"></i> Emergency: 911 / 112
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <a href="/" class="flex items-center space-x-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                            <i data-lucide="activity" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold tracking-tight text-slate-900">AI Smart Healthcare</span>
+                            <span class="block text-[10px] uppercase font-bold tracking-wider text-emerald-600">Clinical Intelligence</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                    <a href="/" class="text-slate-600 hover:text-brand-600 transition-colors">Overview</a>
+                    <a href="/analyze" class="text-slate-600 hover:text-brand-600 transition-colors flex items-center">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-1 text-brand-500"></i> Symptom Diagnosis
+                    </a>
+                    {% if current_user %}
+                    <a href="/dashboard" class="text-slate-600 hover:text-brand-600 transition-colors flex items-center">
+                        <i data-lucide="folder-lock" class="w-4 h-4 mr-1 text-emerald-600"></i> Health Vault
+                    </a>
+                    {% endif %}
+                    <a href="/privacy" class="text-slate-600 hover:text-brand-600 transition-colors">Privacy & Security</a>
+                </nav>
+
+                <div class="flex items-center space-x-3">
+                    {% if current_user %}
+                    <div class="flex items-center space-x-3">
+                        <div class="hidden sm:block text-right">
+                            <span class="block text-xs font-semibold text-slate-900">{{ user_full_name or current_user }}</span>
+                            <span class="block text-[10px] text-emerald-600 font-medium">Encrypted Session</span>
+                        </div>
+                        <a href="/dashboard" class="p-2 text-slate-600 hover:text-brand-600 bg-slate-100 rounded-lg">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </a>
+                        <a href="/auth/logout" class="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition-colors">
+                            Sign Out
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center space-x-2">
+                        <a href="/auth/login" class="px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                            Sign In
+                        </a>
+                        <a href="/auth/register" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm shadow-brand-600/30 transition-all flex items-center">
+                            <i data-lucide="shield" class="w-4 h-4 mr-1.5"></i> Secure Register
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="p-4 mb-3 rounded-xl border flex items-center justify-between {% if category == 'danger' %}bg-rose-50 border-rose-200 text-rose-800{% elif category == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-800{% elif category == 'warning' %}bg-amber-50 border-amber-200 text-amber-800{% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="{% if category == 'danger' %}alert-circle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}alert-triangle{% else %}info{% endif %}" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">{{ message }}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-700">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Block -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 mt-16 text-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+                            <i data-lucide="activity" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-white font-bold text-lg">AI Smart Healthcare</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Next-generation clinical diagnostic support, holistic diet & lifestyle interventions, built with privacy-first AES-256 encrypted architecture.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold text-xs uppercase tracking-wider mb-3">Diagnostic Services</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/analyze" class="hover:text-white transition-colors">Symptom Checker</a></li>
+                        <li><a href="/analyze" class="hover:text-white transition-colors">Personalized Diet Generator</a></li>
+                        <li><a href="/analyze" class="hover:text-white transition-colors">Lifestyle Medicine Roadmap</a></li>
+                        <li><a href="/privacy" class="hover:text-white transition-colors">Emergency Red Flag Triage</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold text-xs uppercase tracking-wider mb-3">Privacy & Compliance</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="/privacy" class="hover:text-white transition-colors">AES-256 Cryptographic Architecture</a></li>
+                        <li><a href="/privacy" class="hover:text-white transition-colors">PBKDF2 Password Salting</a></li>
+                        <li><a href="/privacy" class="hover:text-white transition-colors">Right to be Forgotten (Data Wipe)</a></li>
+                        <li><a href="/privacy" class="hover:text-white transition-colors">Patient Audit Trails</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold text-xs uppercase tracking-wider mb-3">Medical Disclaimer</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        This software provides informational and educational health guidance only. If you are experiencing a medical emergency (severe chest pain, stroke symptoms, shortness of breath), call 911 or your local emergency dispatch immediately.
+                    </p>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400">
+                <p>&copy; 2026 AI Smart Healthcare. Open-source, HIPAA/GDPR Privacy Oriented.</p>
+                <div class="flex items-center space-x-4 mt-4 sm:mt-0">
+                    <span class="flex items-center text-emerald-400 font-mono"><i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1"></i> Data Protected</span>
+                    <a href="/privacy" class="hover:text-white transition-colors">Security Specs</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+
+{% block title %}AI Symptom Checker & Health Care Plan - AI Smart Healthcare{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Header -->
+    <div class="mb-8 text-center sm:text-left">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold mb-2">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i>
+            <span>Encrypted Health Intake Protocol</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI Clinical Symptom Checker & Care Planner</h1>
+        <p class="text-sm text-slate-600 mt-1 max-w-2xl">
+            Input your symptoms and health context. Our clinical engine will evaluate the condition, explain the pathophysiology, provide a solution roadmap, and design a customized diet and lifestyle plan.
+        </p>
+    </div>
+
+    <!-- Intake Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Form Column -->
+        <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
+            <h2 class="text-base font-bold text-slate-900 flex items-center border-b border-slate-100 pb-3">
+                <i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-brand-600"></i>
+                Patient Vitals & Symptoms
+            </h2>
+
+            <!-- Patient Vitals -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Age</label>
+                    <input type="number" id="patientAge" placeholder="e.g. 32" min="1" max="120"
+                           class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Biological Sex</label>
+                    <select id="patientGender" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="Not Specified">Select...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Height (cm)</label>
+                    <input type="number" id="patientHeight" placeholder="e.g. 175"
+                           oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Weight (kg)</label>
+                    <input type="number" id="patientWeight" placeholder="e.g. 70"
+                           oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Live BMI Indicator -->
+            <div id="bmiContainer" class="hidden p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center">
+                <span class="text-slate-600">Calculated BMI: <strong id="bmiValue" class="text-slate-900">-</strong></span>
+                <span id="bmiBadge" class="px-2 py-0.5 rounded font-semibold text-[11px] bg-emerald-100 text-emerald-800">Normal</span>
+            </div>
+
+            <!-- Pre-existing Conditions -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Pre-existing Medical History</label>
+                <input type="text" id="patientPreexisting" placeholder="e.g. Hypertension, Diabetes, Asthma, None"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            </div>
+
+            <!-- Free Text Problem Description -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Describe your health problems & symptoms <span class="text-rose-500">*</span>
+                </label>
+                <textarea id="problemDescription" rows="4"
+                          placeholder="Tell us what you are experiencing in detail... (e.g. 'I have a burning sensation in my chest especially after dinner, sour taste in mouth, bloating, and coughing when lying down for the last 5 days.')"
+                          class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed"></textarea>
+            </div>
+
+            <!-- Quick Symptom Tags -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-2">Quick Symptom Tags (Click to toggle)</label>
+                <div class="flex flex-wrap gap-1.5" id="symptomChips">
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Heartburn</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Acid Regurgitation</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Headache in Back of Head</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Throbbing Headache</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Dizziness</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Shortness of Breath</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Wheezing</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Thirst</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Frequent Urination</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Abdominal Cramping</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Bloating</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Joint Pain</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Morning Stiffness</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Persistent Cough</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Burning Urination</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Worry</button>
+                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Fatigue</button>
+                </div>
+            </div>
+
+            <!-- Severity & Duration -->
+            <div class="space-y-4 pt-2 border-t border-slate-100">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-semibold text-slate-700">Pain / Severity Level (1 - 10)</label>
+                        <span id="severityLabel" class="text-xs font-bold text-amber-600">5 - Moderate</span>
+                    </div>
+                    <input type="range" id="severityRange" min="1" max="10" value="5"
+                           oninput="updateSeverityLabel(this.value)"
+                           class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Duration of Symptoms</label>
+                    <select id="durationSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option value="Less than 24 hours">Less than 24 hours</option>
+                        <option value="1 to 3 days" selected>1 to 3 days</option>
+                        <option value="1 to 2 weeks">1 to 2 weeks</option>
+                        <option value="Several weeks">Several weeks</option>
+                        <option value="Over a month / Chronic">Over a month (Chronic)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Privacy Controls -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                <div class="font-bold text-slate-900 flex items-center">
+                    <i data-lucide="lock" class="w-4 h-4 mr-1.5 text-emerald-600"></i> Privacy & Data Protection
+                </div>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="anonymizeToggle" class="rounded text-brand-600 focus:ring-brand-500">
+                    <span class="text-slate-700">Anonymize consultation (auto-redact any names/emails/phones)</span>
+                </label>
+                {% if current_user %}
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" id="saveVaultToggle" checked class="rounded text-brand-600 focus:ring-brand-500">
+                    <span class="text-slate-700">Encrypt and save this consultation to my personal Health Vault</span>
+                </label>
+                {% else %}
+                <p class="text-[11px] text-slate-500">
+                    Guest session: results are computed live. <a href="/auth/register" class="text-brand-600 underline font-semibold">Sign up</a> to save records in your AES-256 encrypted vault.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="button" id="analyzeBtn" onclick="runHealthAnalysis()"
+                    class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 shadow-md shadow-brand-500/20 transition-all flex items-center justify-center space-x-2">
+                <i data-lucide="stethoscope" class="w-5 h-5"></i>
+                <span id="btnText">Run AI Health Evaluation</span>
+                <div id="btnSpinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
+        </div>
+
+        <!-- Results Column -->
+        <div class="lg:col-span-7 space-y-6">
+            <!-- Placeholder initial state -->
+            <div id="resultsPlaceholder" class="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-500 space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                    <i data-lucide="activity" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-700">Ready for Clinical Analysis</h3>
+                <p class="text-xs max-w-sm mx-auto leading-relaxed">
+                    Fill in your symptoms and click "Run AI Health Evaluation". Your full diagnostic analysis, medical solutions, tailored diet plan, and lifestyle medicine regimen will appear here.
+                </p>
+                <div class="inline-flex items-center space-x-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>AES-256 Encrypted Processing</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Results Container -->
+            <div id="resultsContainer" class="hidden space-y-6">
+                <!-- Red Flag Emergency Alert Banner -->
+                <div id="emergencyBanner" class="hidden p-5 rounded-2xl bg-rose-50 border-2 border-rose-400 text-rose-900 shadow-sm animate-pulse">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex-shrink-0 flex items-center justify-center">
+                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-base font-extrabold text-rose-800" id="emergencyTitle">URGENT MEDICAL ALERT</h4>
+                            <p class="text-xs font-semibold text-rose-700" id="emergencyAction"></p>
+                            <p class="text-[11px] text-rose-600">Emergency numbers: 911 (US/Canada), 112 (EU/India), 999 (UK).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primary Assessment Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="text-[11px] uppercase tracking-wider font-bold text-brand-600 block" id="resultCategory">Category</span>
+                            <h2 class="text-xl font-extrabold text-slate-900" id="resultConditionName">Condition Name</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="urgencyBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                Routine
+                            </span>
+                            <span id="confidenceBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                95% Confidence
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Specialist to consult -->
+                    <div class="p-3 rounded-xl bg-brand-50/70 border border-brand-200 flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="stethoscope" class="w-4 h-4 text-brand-600"></i>
+                            <span class="text-slate-700">Recommended Medical Specialist:</span>
+                            <strong class="text-brand-900 font-bold" id="resultSpecialist">Physician</strong>
+                        </div>
+                        <span class="text-[11px] text-emerald-700 font-semibold flex items-center">
+                            <i data-lucide="lock" class="w-3 h-3 mr-1"></i> Encrypted
+                        </span>
+                    </div>
+
+                    <!-- Pathophysiology & Detailed Explanation -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
+                            <i data-lucide="book-open" class="w-4 h-4 mr-1.5 text-brand-600"></i>
+                            Detailed Clinical Explanation
+                        </h4>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-2">
+                            <p id="resultExplanation"></p>
+                        </div>
+                    </div>
+
+                    <!-- Gemini AI Augmented Insights (if available) -->
+                    <div id="aiNotesContainer" class="hidden">
+                        <h4 class="text-xs font-bold text-purple-900 uppercase tracking-wider mb-2 flex items-center">
+                            <i data-lucide="sparkles" class="w-4 h-4 mr-1.5 text-purple-600"></i>
+                            Advanced Clinical Reasoning Notes
+                        </h4>
+                        <div class="p-4 rounded-xl bg-purple-50 border border-purple-200 text-xs text-purple-900 leading-relaxed space-y-2">
+                            <p id="aiNotesText"></p>
+                        </div>
+                    </div>
+
+                    <!-- Medical Solutions & Treatment Roadmap -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 mr-1.5 text-emerald-600"></i>
+                            Actionable Solutions & Treatment Roadmap
+                        </h4>
+                        <ul id="resultSolutions" class="space-y-2 text-xs text-slate-700"></ul>
+                    </div>
+                </div>
+
+                <!-- Tailored Diet Protocol Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center">
+                            <i data-lucide="utensils" class="w-5 h-5 mr-2 text-emerald-600"></i>
+                            Tailored Clinical Diet & Nutrition Protocol
+                        </h3>
+                        <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            Personalized
+                        </span>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-950 font-medium">
+                        <strong class="block mb-0.5">Core Dietary Guideline:</strong>
+                        <span id="dietGuideline"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Foods to Eat -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                            <h5 class="text-xs font-bold text-emerald-800 flex items-center">
+                                <i data-lucide="check" class="w-4 h-4 mr-1 text-emerald-600"></i> Recommended Healing Foods
+                            </h5>
+                            <ul id="dietFoodsEat" class="space-y-1.5 text-xs text-slate-700"></ul>
+                        </div>
+
+                        <!-- Foods to Avoid -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                            <h5 class="text-xs font-bold text-rose-800 flex items-center">
+                                <i data-lucide="x" class="w-4 h-4 mr-1 text-rose-600"></i> Foods to Strictly Avoid / Restrict
+                            </h5>
+                            <ul id="dietFoodsAvoid" class="space-y-1.5 text-xs text-slate-700"></ul>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
+                        <div class="p-3 rounded-lg bg-blue-50/60 border border-blue-200 text-blue-900">
+                            <span class="font-bold block mb-1 flex items-center">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 mr-1 text-blue-600"></i> Meal Timing & Schedule:
+                            </span>
+                            <span id="dietTiming"></span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-cyan-50/60 border border-cyan-200 text-cyan-900">
+                            <span class="font-bold block mb-1 flex items-center">
+                                <i data-lucide="droplet" class="w-3.5 h-3.5 mr-1 text-cyan-600"></i> Hydration Target:
+                            </span>
+                            <span id="dietHydration"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lifestyle & Wellness Medicine Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center">
+                            <i data-lucide="heart-pulse" class="w-5 h-5 mr-2 text-brand-600"></i>
+                            Personalized Lifestyle Medicine & Recovery
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <h5 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="activity" class="w-4 h-4 mr-1.5 text-brand-600"></i> Exercise & Physical Movement
+                            </h5>
+                            <p id="lifestyleExercise" class="text-slate-600 leading-relaxed"></p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <h5 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="moon" class="w-4 h-4 mr-1.5 text-indigo-600"></i> Sleep Hygiene & Recovery Posture
+                            </h5>
+                            <p id="lifestyleSleep" class="text-slate-600 leading-relaxed"></p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <h5 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="smile" class="w-4 h-4 mr-1.5 text-teal-600"></i> Stress Reduction & Autonomic Balance
+                            </h5>
+                            <p id="lifestyleStress" class="text-slate-600 leading-relaxed"></p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <h5 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="shield-check" class="w-4 h-4 mr-1.5 text-emerald-600"></i> Daily Habits & Triggers
+                            </h5>
+                            <p id="lifestyleHabits" class="text-slate-600 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Differential Diagnoses -->
+                <div id="secondaryContainer" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                        Secondary Differential Diagnoses Considered
+                    </h3>
+                    <div id="secondaryList" class="space-y-2"></div>
+                </div>
+
+                <!-- Medical Disclaimer & Actions -->
+                <div class="p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-500 space-y-3">
+                    <p id="disclaimerText" class="leading-relaxed"></p>
+                    <div class="flex flex-wrap justify-between items-center pt-2 border-t border-slate-200">
+                        <span class="flex items-center text-emerald-700 font-semibold">
+                            <i data-lucide="lock" class="w-3.5 h-3.5 mr-1"></i> Data Protection: AES-256 Field Encrypted
+                        </span>
+                        <div class="flex space-x-2 mt-2 sm:mt-0">
+                            <button onclick="window.print()" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 mr-1"></i> Print / Save PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedTags = [];
+
+    function toggleTag(button) {
+        const text = button.innerText.trim();
+        const index = selectedTags.indexOf(text);
+        if (index > -1) {
+            selectedTags.splice(index, 1);
+            button.classList.remove('bg-brand-600', 'text-white', 'border-brand-600');
+            button.classList.add('bg-slate-50', 'text-slate-700', 'border-slate-200');
+        } else {
+            selectedTags.push(text);
+            button.classList.remove('bg-slate-50', 'text-slate-700', 'border-slate-200');
+            button.classList.add('bg-brand-600', 'text-white', 'border-brand-600');
+        }
+    }
+
+    function calculateBMI() {
+        const h = parseFloat(document.getElementById('patientHeight').value);
+        const w = parseFloat(document.getElementById('patientWeight').value);
+        const container = document.getElementById('bmiContainer');
+        const valElem = document.getElementById('bmiValue');
+        const badge = document.getElementById('bmiBadge');
+
+        if (h > 50 && w > 20) {
+            const hMeter = h / 100;
+            const bmi = (w / (hMeter * hMeter)).toFixed(1);
+            valElem.innerText = bmi;
+            container.classList.remove('hidden');
+
+            if (bmi < 18.5) {
+                badge.innerText = 'Underweight';
+                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-amber-100 text-amber-800';
+            } else if (bmi <= 24.9) {
+                badge.innerText = 'Normal (Optimal)';
+                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-emerald-100 text-emerald-800';
+            } else if (bmi <= 29.9) {
+                badge.innerText = 'Overweight';
+                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-amber-100 text-amber-800';
+            } else {
+                badge.innerText = 'Obese';
+                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-rose-100 text-rose-800';
+            }
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
+    function updateSeverityLabel(val) {
+        const label = document.getElementById('severityLabel');
+        let text = `${val} - Moderate`;
+        let color = 'text-amber-600';
+        if (val <= 3) {
+            text = `${val} - Mild`;
+            color = 'text-emerald-600';
+        } else if (val >= 8) {
+            text = `${val} - Severe / Critical`;
+            color = 'text-rose-600';
+        }
+        label.innerText = text;
+        label.className = `text-xs font-bold ${color}`;
+    }
+
+    async function runHealthAnalysis() {
+        const description = document.getElementById('problemDescription').value.trim();
+        if (!description && selectedTags.length === 0) {
+            alert('Please describe your symptoms or select at least one symptom tag.');
+            return;
+        }
+
+        const btn = document.getElementById('analyzeBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('btnSpinner');
+
+        btn.disabled = true;
+        btnText.innerText = 'Analyzing with Clinical Engine...';
+        spinner.classList.remove('hidden');
+
+        const payload = {
+            problem_description: description,
+            symptom_tags: selectedTags,
+            age: document.getElementById('patientAge').value,
+            gender: document.getElementById('patientGender').value,
+            height: document.getElementById('patientHeight').value,
+            weight: document.getElementById('patientWeight').value,
+            preexisting: document.getElementById('patientPreexisting').value,
+            severity: document.getElementById('severityRange').value,
+            duration: document.getElementById('durationSelect').value,
+            anonymize_mode: document.getElementById('anonymizeToggle').checked,
+            save_to_vault: document.getElementById('saveVaultToggle') ? document.getElementById('saveVaultToggle').checked : false
+        };
+
+        try {
+            const resp = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) {
+                const errData = await resp.json();
+                throw new Error(errData.error || 'Server error occurred');
+            }
+
+            const data = await resp.json();
+            renderResults(data);
+        } catch (err) {
+            alert('Analysis Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = 'Run AI Health Evaluation';
+            spinner.classList.add('hidden');
+        }
+    }
+
+    function renderResults(data) {
+        document.getElementById('resultsPlaceholder').classList.add('hidden');
+        const container = document.getElementById('resultsContainer');
+        container.classList.remove('hidden');
+
+        // 1. Red Flag Emergency Alert
+        const emBanner = document.getElementById('emergencyBanner');
+        if (data.emergency_alert) {
+            document.getElementById('emergencyTitle').innerText = data.emergency_alert.condition;
+            document.getElementById('emergencyAction').innerText = data.emergency_alert.action;
+            emBanner.classList.remove('hidden');
+        } else {
+            emBanner.classList.add('hidden');
+        }
+
+        // 2. Primary Condition
+        const prime = data.primary_condition;
+        document.getElementById('resultCategory').innerText = prime.category;
+        document.getElementById('resultConditionName').innerText = prime.name;
+        document.getElementById('resultSpecialist').innerText = prime.specialist;
+        document.getElementById('confidenceBadge').innerText = `${prime.confidence_score}% Confidence`;
+        
+        const urgencyElem = document.getElementById('urgencyBadge');
+        urgencyElem.innerText = prime.urgency;
+        if (prime.urgency === 'Emergency') {
+            urgencyElem.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800';
+        } else if (prime.urgency === 'Urgent') {
+            urgencyElem.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+        } else {
+            urgencyElem.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+        }
+
+        // Explanation
+        document.getElementById('resultExplanation').innerText = prime.explanation;
+
+        // Gemini AI Notes if available
+        const aiContainer = document.getElementById('aiNotesContainer');
+        if (data.ai_enhanced_notes) {
+            document.getElementById('aiNotesText').innerText = data.ai_enhanced_notes;
+            aiContainer.classList.remove('hidden');
+        } else {
+            aiContainer.classList.add('hidden');
+        }
+
+        // Solutions
+        const solList = document.getElementById('resultSolutions');
+        solList.innerHTML = '';
+        prime.solutions.forEach(sol => {
+            const li = document.createElement('li');
+            li.className = 'flex items-start space-x-2';
+            li.innerHTML = `<i data-lucide="chevron-right" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5"></i><span>${sol}</span>`;
+            solList.appendChild(li);
+        });
+
+        // Diet
+        const diet = prime.diet;
+        document.getElementById('dietGuideline').innerText = diet.guideline;
+        
+        const eatList = document.getElementById('dietFoodsEat');
+        eatList.innerHTML = '';
+        diet.foods_to_eat.forEach(f => {
+            const li = document.createElement('li');
+            li.className = 'flex items-start space-x-2';
+            li.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
+            eatList.appendChild(li);
+        });
+
+        const avoidList = document.getElementById('dietFoodsAvoid');
+        avoidList.innerHTML = '';
+        diet.foods_to_avoid.forEach(f => {
+            const li = document.createElement('li');
+            li.className = 'flex items-start space-x-2';
+            li.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
+            avoidList.appendChild(li);
+        });
+
+        document.getElementById('dietTiming').innerText = diet.meal_timing;
+        document.getElementById('dietHydration').innerText = diet.hydration;
+
+        // Lifestyle
+        const life = prime.lifestyle;
+        document.getElementById('lifestyleExercise').innerText = life.exercise;
+        document.getElementById('lifestyleSleep').innerText = life.sleep;
+        document.getElementById('lifestyleStress').innerText = life.stress_management;
+        document.getElementById('lifestyleHabits').innerText = life.habits;
+
+        // Secondary Possibilities
+        const secContainer = document.getElementById('secondaryContainer');
+        const secList = document.getElementById('secondaryList');
+        secList.innerHTML = '';
+        if (data.secondary_possibilities && data.secondary_possibilities.length > 0) {
+            data.secondary_possibilities.forEach(sec => {
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-lg bg-slate-50 border border-slate-200 flex justify-between items-center text-xs';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-800">${sec.name}</span>
+                        <span class="text-slate-500 ml-2">(${sec.category})</span>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-600">${sec.confidence}% match</span>
+                `;
+                secList.appendChild(div);
+            });
+            secContainer.classList.remove('hidden');
+        } else {
+            secContainer.classList.add('hidden');
+        }
+
+        // Disclaimer
+        document.getElementById('disclaimerText').innerText = data.disclaimer;
+
+        lucide.createIcons();
+
+        // Smooth scroll to results
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+</script>
+{% endblock %}

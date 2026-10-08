@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy & Data Protection Center - AI Smart Healthcare{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <!-- Header -->
+    <div class="max-w-3xl">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold mb-2">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>Zero-Trust Patient Security Standard</span>
+        </div>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Privacy, Cryptography & Compliance</h1>
+        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+            Healthcare information is among the most sensitive data in existence. AI Smart Healthcare is engineered with zero-compromise encryption, role isolation, and patient autonomy at its very foundation.
+        </p>
+    </div>
+
+    <!-- Security Specs Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="key" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">AES-256 Symmetric Encryption</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                All patient symptom logs, medical history, diagnoses, diet, and lifestyle prescriptions are encrypted at rest using Fernet (AES-128-CBC with HMAC-SHA256 authenticated encryption).
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">PBKDF2 Password Salting</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Credentials are never stored in plain text. Passwords undergo 100,000 iterations of PBKDF2-HMAC-SHA256 with cryptographically random 16-byte unique salts.
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Right to be Forgotten</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                In compliance with GDPR Article 17 and HIPAA data sovereignty, you can permanently erase every trace of your consultation logs and profile with a single click.
+            </p>
+        </div>
+    </div>
+
+    <!-- Security Audit Trail -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900 flex items-center">
+                <i data-lucide="list-checks" class="w-5 h-5 mr-2 text-brand-600"></i>
+                Real-Time Security & Cryptographic Audit Trail
+            </h3>
+            <span class="text-xs font-semibold text-slate-500">Immutable Event Log</span>
+        </div>
+
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+                <thead class="bg-slate-50 text-slate-600 uppercase text-[10px] tracking-wider font-bold">
+                    <tr>
+                        <th class="px-4 py-2.5">Log ID</th>
+                        <th class="px-4 py-2.5">Cryptographic Action</th>
+                        <th class="px-4 py-2.5">Timestamp</th>
+                        <th class="px-4 py-2.5">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% for l in logs %}
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">#{{ l.id }}</td>
+                        <td class="px-4 py-2.5 font-mono text-[11px] font-semibold text-brand-700">{{ l.action }}</td>
+                        <td class="px-4 py-2.5 text-slate-500">{{ l.timestamp }}</td>
+                        <td class="px-4 py-2.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                Verified Secure
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-500 py-4 text-center">No security logs recorded yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Patient Data Sovereignty / Wipe Center -->
+    {% if current_user %}
+    <div class="bg-rose-50/50 rounded-2xl border border-rose-200 p-6 space-y-4">
+        <h3 class="text-base font-extrabold text-rose-900 flex items-center">
+            <i data-lucide="alert-octagon" class="w-5 h-5 mr-2 text-rose-600"></i>
+            Permanent Data Destruction (Right to be Forgotten)
+        </h3>
+        <p class="text-xs text-rose-800 leading-relaxed max-w-2xl">
+            Exercising this action will immediately purge all your medical consultations, symptoms, diagnoses, diet plans, and user account records from the database. This action is cryptographic and permanent.
+        </p>
+
+        <form action="/api/wipe-my-data" method="POST" onsubmit="return confirm('WARNING: Are you absolutely sure? This will permanently delete all your encrypted health records and account data. This action CANNOT be undone.');">
+            <button type="submit"
+                    class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition-colors flex items-center">
+                <i data-lucide="trash-2" class="w-4 h-4 mr-1.5"></i>
+                Permanently Wipe All My Data
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
