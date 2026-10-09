@@ -952,100 +952,238 @@
     }
 
     // ==========================================
-    // VOICE ASSISTANT CLIENT ENGINE
+    // ROBUST AI VOICE ASSISTANT CLIENT ENGINE
     // ==========================================
-    let mainRecognition = null;
-    let inlineRecognition = null;
     let isListeningMain = false;
     let isListeningInline = false;
+    let mainRecognition = null;
+    let inlineRecognition = null;
+    let accumulatedFinalText = '';
+    let inlineAccumulated = '';
+    let audioContext = null;
+    let analyser = null;
+    let micMediaStream = null;
+    let animationFrameId = null;
+    let mediaRecorder = null;
+    let recordedAudioChunks = [];
+    let recordedAudioBlob = null;
     let currentVoiceScript = '';
     let synthUtterance = null;
     let isVoiceSpeaking = false;
+    let ttsHeartbeat = null;
 
-    function getSpeechRecognitionClass() {
-        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    async function getMicrophoneStream() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Microphone audio capture is not supported in this browser.');
+        }
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
     }
 
-    function initRecognitionInstance(lang) {
-        const SpeechRecClass = getSpeechRecognitionClass();
-        if (!SpeechRecClass) return null;
+    function startAudioVisualizer(stream) {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!audioContext || audioContext.state === 'closed') {
+                audioContext = new AudioCtx();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            const source = audioContext.createMediaStreamSource(stream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 64;
+            source.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const barElements = document.querySelectorAll('#activeVoiceBars span');
+
+            function renderBars() {
+                if (!isListeningMain && !isListeningInline) return;
+                analyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+
+                // Animate equalizer bars in sync with user's real voice volume
+                barElements.forEach((bar, idx) => {
+                    const val = dataArray[(idx * 2) % dataArray.length] || average;
+                    const h = Math.max(4, Math.min(26, Math.round((val / 255) * 26) + 3));
+                    bar.style.height = `${h}px`;
+                });
+
+                animationFrameId = requestAnimationFrame(renderBars);
+            }
+            renderBars();
+        } catch (err) {
+            console.warn('AudioContext visualizer notice:', err);
+        }
+    }
+
+    function stopAudioVisualizer() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        if (micMediaStream) {
+            micMediaStream.getTracks().forEach(t => t.stop());
+            micMediaStream = null;
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+            try { audioContext.close(); } catch(e) {}
+            audioContext = null;
+        }
+    }
+
+    function startSpeechRecognitionEngine() {
+        const SpeechRecClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecClass) {
+            console.log('Web Speech API not available, will use audio recording fallback.');
+            return null;
+        }
+
         const rec = new SpeechRecClass();
         rec.continuous = true;
         rec.interimResults = true;
-        rec.lang = lang || 'en-IN';
-        return rec;
-    }
+        rec.lang = document.getElementById('voiceLangSelect').value || 'en-IN';
 
-    function toggleVoiceConsultation() {
-        if (isListeningMain) {
-            stopVoiceConsultation();
-        } else {
-            startVoiceConsultation();
-        }
-    }
-
-    function startVoiceConsultation() {
-        const SpeechRecClass = getSpeechRecognitionClass();
-        if (!SpeechRecClass) {
-            alert('Voice speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari, or type into the box below.');
-            return;
-        }
-
-        const lang = document.getElementById('voiceLangSelect').value || 'en-IN';
-        mainRecognition = initRecognitionInstance(lang);
-        if (!mainRecognition) return;
-
-        mainRecognition.onstart = function() {
-            isListeningMain = true;
-            document.getElementById('voiceMicStatusTitle').innerText = 'Listening... Speak Your Symptoms';
-            document.getElementById('voiceMicStatusSub').innerText = 'Describe pains, triggers, duration, and how you feel. Transcribing in real-time.';
-            document.getElementById('micRippleRing').classList.remove('hidden');
-            document.getElementById('micRippleRing2').classList.remove('hidden');
-            document.getElementById('activeVoiceBars').classList.remove('hidden');
-            document.getElementById('mainVoiceMicIcon').classList.add('text-rose-500', 'animate-pulse');
+        rec.onstart = function() {
+            console.log('Speech recognition active');
         };
 
-        mainRecognition.onresult = function(event) {
-            let finalTranscript = '';
+        rec.onresult = function(event) {
+            let interim = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    accumulatedFinalText += transcript + ' ';
+                } else {
+                    interim += transcript;
                 }
             }
-            if (finalTranscript) {
-                const ta = document.getElementById('voiceSpokenText');
-                ta.value = (ta.value ? ta.value + ' ' : '') + finalTranscript.trim();
+            const fullText = (accumulatedFinalText + (interim ? ' ' + interim : '')).trim();
+            if (fullText) {
+                document.getElementById('voiceSpokenText').value = fullText;
+                document.getElementById('voiceMicStatusSub').innerText = 'Heard: "' + fullText.slice(-60) + '"';
             }
         };
 
-        mainRecognition.onerror = function(event) {
+        rec.onerror = function(event) {
             console.warn('Speech recognition notice:', event.error);
-            if (event.error === 'not-allowed') {
-                alert('Microphone access was denied. Please allow microphone access in your browser to speak.');
+            if (event.error === 'no-speech') {
+                document.getElementById('voiceMicStatusSub').innerText = 'Listening... Speak whenever you are ready.';
+                return;
             }
-            stopVoiceConsultation();
+            if (event.error === 'not-allowed') {
+                document.getElementById('voiceMicStatusTitle').innerText = 'Microphone Blocked';
+                document.getElementById('voiceMicStatusSub').innerText = 'Please click the lock icon in your address bar and allow microphone access.';
+                stopVoiceConsultation();
+                return;
+            }
+            if (event.error === 'network') {
+                document.getElementById('voiceMicStatusSub').innerText = 'Speech server notice. Live audio recording mode active.';
+            }
         };
 
-        mainRecognition.onend = function() {
+        rec.onend = function() {
             if (isListeningMain) {
-                stopVoiceConsultation();
+                try {
+                    rec.start();
+                } catch(e) {}
             }
         };
 
         try {
-            mainRecognition.start();
-        } catch (e) {
-            console.log('Recognition restart:', e);
+            rec.start();
+            return rec;
+        } catch(e) {
+            console.warn('Recognition start exception:', e);
+            return null;
         }
+    }
+
+    async function toggleVoiceConsultation() {
+        if (isListeningMain) {
+            stopVoiceConsultation();
+        } else {
+            await startVoiceConsultation();
+        }
+    }
+
+    async function startVoiceConsultation() {
+        try {
+            micMediaStream = await getMicrophoneStream();
+        } catch (err) {
+            console.error('Mic access error:', err);
+            document.getElementById('voiceMicStatusTitle').innerText = 'Microphone Permission Needed';
+            document.getElementById('voiceMicStatusSub').innerText = 'Please allow microphone access in your browser to speak with the AI assistant.';
+            alert('Microphone access was denied or is unavailable. Please click the lock icon in your browser address bar and enable Microphone.');
+            return;
+        }
+
+        isListeningMain = true;
+        accumulatedFinalText = document.getElementById('voiceSpokenText').value.trim();
+        if (accumulatedFinalText) accumulatedFinalText += ' ';
+
+        // Visual UI updates
+        document.getElementById('voiceMicStatusTitle').innerText = 'Listening... Speak Your Symptoms';
+        document.getElementById('voiceMicStatusSub').innerText = 'Describe pains, triggers, duration, and how you feel.';
+        document.getElementById('micRippleRing').classList.remove('hidden');
+        document.getElementById('micRippleRing2').classList.remove('hidden');
+        document.getElementById('activeVoiceBars').classList.remove('hidden');
+        document.getElementById('mainVoiceMicIcon').classList.add('text-rose-500', 'animate-pulse');
+
+        // 1. Start audio visualizer with real microphone input
+        startAudioVisualizer(micMediaStream);
+
+        // 2. Start MediaRecorder for audio capture fallback
+        try {
+            recordedAudioChunks = [];
+            const options = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm')) ? { mimeType: 'audio/webm' } : {};
+            mediaRecorder = new MediaRecorder(micMediaStream, options);
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data && e.data.size > 0) {
+                    recordedAudioChunks.push(e.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                if (recordedAudioChunks.length > 0) {
+                    recordedAudioBlob = new Blob(recordedAudioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                }
+            };
+            mediaRecorder.start(250);
+        } catch (recErr) {
+            console.warn('MediaRecorder init notice:', recErr);
+        }
+
+        // 3. Start real-time speech recognition
+        mainRecognition = startSpeechRecognitionEngine();
     }
 
     function stopVoiceConsultation() {
         isListeningMain = false;
+
         if (mainRecognition) {
-            try { mainRecognition.stop(); } catch (e) {}
+            try { mainRecognition.stop(); } catch(e) {}
+            mainRecognition = null;
         }
-        document.getElementById('voiceMicStatusTitle').innerText = 'Voice Captured';
-        document.getElementById('voiceMicStatusSub').innerText = "Click 'Analyze Spoken Problem with AI' or tap the mic again to speak more.";
+
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch(e) {}
+        }
+
+        stopAudioVisualizer();
+
+        const currentText = document.getElementById('voiceSpokenText').value.trim();
+        if (currentText) {
+            document.getElementById('voiceMicStatusTitle').innerText = 'Voice Captured & Transcribed';
+            document.getElementById('voiceMicStatusSub').innerText = "Review your spoken words below and click 'Analyze Spoken Problem with AI'.";
+        } else {
+            document.getElementById('voiceMicStatusTitle').innerText = 'Tap to Speak Your Problem';
+            document.getElementById('voiceMicStatusSub').innerText = "Describe how you're feeling, when symptoms began, and any discomfort.";
+        }
         document.getElementById('micRippleRing').classList.add('hidden');
         document.getElementById('micRippleRing2').classList.add('hidden');
         document.getElementById('activeVoiceBars').classList.add('hidden');
@@ -1070,69 +1208,92 @@
     }
 
     // Inline Dictation inside Symptoms mode
-    function toggleInlineDictation() {
-        const SpeechRecClass = getSpeechRecognitionClass();
-        if (!SpeechRecClass) {
-            alert('Voice speech recognition is not supported in this browser. Please use Chrome or Edge.');
-            return;
-        }
-
+    async function toggleInlineDictation() {
         if (isListeningInline) {
-            if (inlineRecognition) {
-                try { inlineRecognition.stop(); } catch (e) {}
-            }
-            isListeningInline = false;
-            document.getElementById('inlineMicText').innerText = 'Speak Symptoms';
-            document.getElementById('inlineMicBtn').classList.remove('bg-rose-200');
+            stopInlineDictation();
             return;
         }
 
-        inlineRecognition = initRecognitionInstance('en-IN');
-        inlineRecognition.onstart = function() {
-            isListeningInline = true;
-            document.getElementById('inlineMicText').innerText = 'Listening...';
-            document.getElementById('inlineMicBtn').classList.add('bg-rose-200');
-        };
+        let stream;
+        try {
+            stream = await getMicrophoneStream();
+        } catch (err) {
+            alert('Microphone access was denied. Please allow microphone permissions in your browser.');
+            return;
+        }
+
+        isListeningInline = true;
+        inlineAccumulated = document.getElementById('problemDescription').value.trim();
+        if (inlineAccumulated) inlineAccumulated += ' ';
+
+        document.getElementById('inlineMicText').innerText = 'Listening...';
+        document.getElementById('inlineMicBtn').classList.add('bg-rose-200', 'text-rose-900');
+
+        const SpeechRecClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecClass) {
+            alert('Web Speech API is not supported in this browser. Please use Chrome or Edge.');
+            stopInlineDictation();
+            return;
+        }
+
+        inlineRecognition = new SpeechRecClass();
+        inlineRecognition.continuous = true;
+        inlineRecognition.interimResults = true;
+        inlineRecognition.lang = 'en-IN';
 
         inlineRecognition.onresult = function(event) {
-            let finalStr = '';
+            let interim = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalStr += event.results[i][0].transcript + ' ';
+                    inlineAccumulated += transcript + ' ';
+                } else {
+                    interim += transcript;
                 }
             }
-            if (finalStr) {
-                const ta = document.getElementById('problemDescription');
-                ta.value = (ta.value ? ta.value + ' ' : '') + finalStr.trim();
+            const fullText = (inlineAccumulated + (interim ? ' ' + interim : '')).trim();
+            if (fullText) {
+                document.getElementById('problemDescription').value = fullText;
             }
+        };
+
+        inlineRecognition.onerror = function(event) {
+            if (event.error === 'no-speech') return; // ignore silence
+            stopInlineDictation();
         };
 
         inlineRecognition.onend = function() {
-            isListeningInline = false;
-            document.getElementById('inlineMicText').innerText = 'Speak Symptoms';
-            document.getElementById('inlineMicBtn').classList.remove('bg-rose-200');
-        };
-
-        inlineRecognition.onerror = function() {
-            isListeningInline = false;
-            document.getElementById('inlineMicText').innerText = 'Speak Symptoms';
-            document.getElementById('inlineMicBtn').classList.remove('bg-rose-200');
+            if (isListeningInline) {
+                try { inlineRecognition.start(); } catch(e) {}
+            }
         };
 
         try {
             inlineRecognition.start();
-        } catch (e) {}
+        } catch(e) {
+            stopInlineDictation();
+        }
+    }
+
+    function stopInlineDictation() {
+        isListeningInline = false;
+        if (inlineRecognition) {
+            try { inlineRecognition.stop(); } catch(e) {}
+            inlineRecognition = null;
+        }
+        document.getElementById('inlineMicText').innerText = 'Speak Symptoms';
+        document.getElementById('inlineMicBtn').classList.remove('bg-rose-200', 'text-rose-900');
     }
 
     async function runVoiceAnalysis() {
-        const spoken = document.getElementById('voiceSpokenText').value.trim();
-        if (!spoken) {
-            alert('Please tap the microphone to speak your symptoms or pick a sample prompt first.');
-            return;
-        }
-
         if (isListeningMain) {
             stopVoiceConsultation();
+        }
+
+        const spoken = document.getElementById('voiceSpokenText').value.trim();
+        if (!spoken && !recordedAudioBlob) {
+            alert('Please tap the microphone and speak your symptoms or pick a sample prompt first.');
+            return;
         }
 
         const btn = document.getElementById('btnAnalyzeVoice');
@@ -1143,20 +1304,33 @@
         btnText.innerText = 'Analyzing Voice Consultation...';
         spinner.classList.remove('hidden');
 
-        const payload = {
-            spoken_text: spoken,
-            age: document.getElementById('voicePatientAge').value,
-            gender: document.getElementById('voicePatientGender').value,
-            preexisting: document.getElementById('voicePatientPreexisting').value,
-            save_to_vault: true
-        };
-
         try {
-            const resp = await fetch('/api/analyze-voice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let resp;
+            if (recordedAudioBlob && !spoken) {
+                const fd = new FormData();
+                fd.append('voice_audio', recordedAudioBlob, 'voice_recording.webm');
+                fd.append('age', document.getElementById('voicePatientAge').value);
+                fd.append('gender', document.getElementById('voicePatientGender').value);
+                fd.append('preexisting', document.getElementById('voicePatientPreexisting').value);
+                fd.append('save_to_vault', 'true');
+                resp = await fetch('/api/analyze-voice', {
+                    method: 'POST',
+                    body: fd
+                });
+            } else {
+                const payload = {
+                    spoken_text: spoken,
+                    age: document.getElementById('voicePatientAge').value,
+                    gender: document.getElementById('voicePatientGender').value,
+                    preexisting: document.getElementById('voicePatientPreexisting').value,
+                    save_to_vault: true
+                };
+                resp = await fetch('/api/analyze-voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
 
             if (!resp.ok) {
                 const errData = await resp.json();
@@ -1199,7 +1373,8 @@
             return;
         }
 
-        window.speechSynthesis.cancel();
+        stopVoiceSpeech();
+
         synthUtterance = new SpeechSynthesisUtterance(currentVoiceScript);
         synthUtterance.rate = parseFloat(document.getElementById('voiceSpeedSelect').value || '1.0');
 
@@ -1212,15 +1387,25 @@
         synthUtterance.onstart = function() {
             isVoiceSpeaking = true;
             updateVoiceUI(true, false);
+            clearInterval(ttsHeartbeat);
+            ttsHeartbeat = setInterval(() => {
+                if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                    window.speechSynthesis.pause();
+                    window.speechSynthesis.resume();
+                }
+            }, 10000);
         };
 
         synthUtterance.onend = function() {
             isVoiceSpeaking = false;
+            clearInterval(ttsHeartbeat);
             updateVoiceUI(false, false);
         };
 
-        synthUtterance.onerror = function() {
+        synthUtterance.onerror = function(e) {
+            console.warn('Speech synthesis notice:', e);
             isVoiceSpeaking = false;
+            clearInterval(ttsHeartbeat);
             updateVoiceUI(false, false);
         };
 
@@ -1231,6 +1416,7 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
+        clearInterval(ttsHeartbeat);
         isVoiceSpeaking = false;
         updateVoiceUI(false, false);
     }
@@ -1457,6 +1643,17 @@
 
         html2pdf().set(opt).from(element).save();
     }
+
+    // Auto-select mode from query string e.g. /analyze?mode=voice
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+        if (mode === 'voice') {
+            switchIntakeMode('voice');
+        } else if (mode === 'report') {
+            switchIntakeMode('report');
+        }
+    });
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 {% endblock %}

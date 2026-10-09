@@ -15,6 +15,11 @@ try:
 except ImportError:
     requests = None
 
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
+
 from engine.ai_analyzer import analyze_health_problem, detect_emergency_red_flags
 
 
@@ -190,6 +195,21 @@ def transcribe_and_analyze_audio_gemini(
     return None
 
 
+def transcribe_audio_sr(audio_bytes: bytes) -> Optional[str]:
+    """Transcribe audio using SpeechRecognition library."""
+    if not sr or not audio_bytes:
+        return None
+    try:
+        import io
+        r = sr.Recognizer()
+        with sr.AudioFile(io.BytesIO(audio_bytes)) as source:
+            audio_data = r.record(source)
+            text = r.recognize_google(audio_data)
+            return text.strip()
+    except Exception as e:
+        return None
+
+
 def process_voice_consultation(
     spoken_text: str,
     audio_bytes: Optional[bytes] = None,
@@ -200,8 +220,9 @@ def process_voice_consultation(
     """
     Main orchestrator for Voice Consultation:
     1. If raw audio was provided with an API key, attempts Gemini audio transcription & analysis.
-    2. Otherwise, processes the spoken_text with the full clinical intelligence engine.
-    3. Adds conversational spoken voice script for TTS read-aloud.
+    2. If raw audio was provided without Gemini, attempts SpeechRecognition local/google transcriber.
+    3. Otherwise, processes the spoken_text with the full clinical intelligence engine.
+    4. Adds conversational spoken voice script for TTS read-aloud.
     """
     user_profile = user_profile or {}
 
@@ -215,6 +236,12 @@ def process_voice_consultation(
         )
         if gemini_result:
             return gemini_result
+
+        # Try SpeechRecognition fallback if spoken_text is empty
+        if not spoken_text.strip():
+            sr_text = transcribe_audio_sr(audio_bytes)
+            if sr_text:
+                spoken_text = sr_text
 
     # Standard clinical analysis on spoken text
     text_to_analyze = spoken_text.strip() if spoken_text else ""
