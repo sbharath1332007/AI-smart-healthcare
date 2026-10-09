@@ -12,8 +12,10 @@ from database.db import (
     get_user_consultations, wipe_user_health_data, get_recent_security_logs
 )
 from engine.ai_analyzer import analyze_health_problem
+from engine.report_analyzer import analyze_uploaded_medical_report
 from security.auth import login_required
 from security.crypto import anonymize_text
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart_healthcare_secure_session_key_98765")
@@ -85,6 +87,69 @@ def api_analyze():
                 "primary": analysis_result["primary_condition"],
                 "secondary": analysis_result["secondary_possibilities"],
                 "symptoms": analysis_result["extracted_symptoms"],
+                "ai_notes": analysis_result.get("ai_enhanced_notes")
+            },
+            diet_data=analysis_result["primary_condition"]["diet"],
+            lifestyle_data=analysis_result["primary_condition"]["lifestyle"],
+            urgency_level=urgency
+        )
+
+    analysis_result["saved_record_id"] = saved_record_id
+    analysis_result["is_encrypted_at_rest"] = bool(saved_record_id)
+    return jsonify(analysis_result)
+
+
+@app.route("/api/analyze-report", methods=["POST"])
+def api_analyze_report():
+    if "report_file" not in request.files:
+        return jsonify({"error": "No report file was provided. Please upload a PDF or photo of your medical report."}), 400
+    
+    file = request.files["report_file"]
+    if not file or file.filename == "":
+        return jsonify({"error": "No file selected."}), 400
+
+    filename = secure_filename(file.filename) or "medical_report.pdf"
+    file_bytes = file.read()
+
+    if len(file_bytes) == 0:
+        return jsonify({"error": "Uploaded file is empty."}), 400
+
+    if len(file_bytes) > 16 * 1024 * 1024:
+        return jsonify({"error": "File size exceeds 16MB limit."}), 400
+
+    # User profile and notes
+    user_profile = {
+        "age": request.form.get("age", ""),
+        "gender": request.form.get("gender", ""),
+        "preexisting": request.form.get("preexisting", "")
+    }
+    patient_notes = request.form.get("patient_notes", "").strip()
+    gemini_key = request.form.get("api_key", "").strip()
+    save_to_vault = request.form.get("save_to_vault", "true").lower() == "true"
+
+    analysis_result = analyze_uploaded_medical_report(
+        file_bytes=file_bytes,
+        filename=filename,
+        mime_type=file.mimetype or "application/octet-stream",
+        user_profile=user_profile,
+        patient_notes=patient_notes,
+        gemini_api_key=gemini_key
+    )
+
+    # Save to encrypted vault if authenticated
+    saved_record_id = None
+    if "user_id" in session and save_to_vault:
+        urgency = "Emergency" if analysis_result.get("emergency_alert") else analysis_result["primary_condition"]["urgency"]
+        narrative = f"[Medical Report: {filename}] " + (patient_notes if patient_notes else analysis_result["primary_condition"]["name"])
+        saved_record_id = save_consultation(
+            user_id=session["user_id"],
+            symptoms_text=narrative,
+            diagnosis_data={
+                "primary": analysis_result["primary_condition"],
+                "secondary": analysis_result.get("secondary_possibilities", []),
+                "lab_findings": analysis_result.get("lab_findings", []),
+                "report_filename": filename,
+                "report_type": analysis_result.get("report_type"),
                 "ai_notes": analysis_result.get("ai_enhanced_notes")
             },
             diet_data=analysis_result["primary_condition"]["diet"],
@@ -222,22 +287,6 @@ def wipe_data():
     session.clear()
     flash("All your medical records, profiles, and encrypted keys have been permanently wiped (Right to be Forgotten).", "warning")
     return redirect(url_for("index"))
-
-
-@app.route("/api/export-health-data")
-@login_required
-def export_health_data():
-    consultations = get_user_consultations(session["user_id"])
-    export_payload = {
-        "patient_username": session.get("username"),
-        "patient_name": session.get("full_name"),
-        "profile": session.get("profile"),
-        "export_timestamp": str(os.environ.get("CURRENT_TIME", "2026-10-08")),
-        "security": "Exported from AES-256 Decrypted Client Session",
-        "total_records": len(consultations),
-        "consultations": consultations
-    }
-    return jsonify(export_payload)
 
 
 if __name__ == "__main__":

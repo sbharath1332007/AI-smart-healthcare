@@ -8,6 +8,7 @@ import unittest
 import os
 import tempfile
 import json
+import io
 
 from security.crypto import encrypt_text, decrypt_text, encrypt_json, decrypt_json, anonymize_text
 from security.auth import hash_password, verify_password
@@ -230,6 +231,64 @@ class TestAISmartHealthcare(unittest.TestCase):
         r_dos = self.client.get("/dossier/print")
         self.assertEqual(r_dos.status_code, 200)
         self.assertIn(b"PATIENT HEALTH DOSSIER", r_dos.data)
+
+    def test_12_medical_report_pdf_api(self):
+        """Test uploading a medical PDF report for automated AI extraction and evaluation."""
+        pdf_bytes = (
+            b"%PDF-1.4\n"
+            b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+            b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+            b"3 0 obj << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >> endobj\n"
+            b"4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"
+            b"5 0 obj << /Length 95 >> stream\n"
+            b"BT /F1 12 Tf 50 700 Td (Diagnostic Report: HbA1c 7.5 percent and Fasting Glucose 142 mg/dL) Tj ET\n"
+            b"endstream endobj\n"
+            b"xref\n0 6\n0000000000 65535 f \n0000000010 00000 n \n0000000060 00000 n \n0000000117 00000 n \n0000000227 00000 n \n0000000300 00000 n \n"
+            b"trailer << /Size 6 /Root 1 0 R >>\nstartxref\n470\n%%EOF\n"
+        )
+        data = {
+            "report_file": (io.BytesIO(pdf_bytes), "blood_panel.pdf"),
+            "age": "45",
+            "gender": "Male",
+            "patient_notes": "Routine diabetic checkup"
+        }
+        res = self.client.post(
+            "/api/analyze-report",
+            data=data,
+            content_type="multipart/form-data"
+        )
+        self.assertEqual(res.status_code, 200)
+        json_data = res.get_json()
+        self.assertEqual(json_data["report_type"], "Medical PDF Report")
+        self.assertIn("Diabetes", json_data["primary_condition"]["name"])
+        self.assertGreater(len(json_data["lab_findings"]), 0)
+        self.assertIn("foods_to_eat", json_data["primary_condition"]["diet"])
+
+    def test_13_medical_report_photo_api(self):
+        """Test uploading a photo/image of a medical report for analysis."""
+        from PIL import Image
+        img = Image.new("RGB", (400, 300), color=(255, 255, 255))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+
+        data = {
+            "report_file": (buf, "prescription_photo.jpg"),
+            "age": "34",
+            "gender": "Female",
+            "patient_notes": "Severe burning in chest and acid reflux esophagitis after dinner"
+        }
+        res = self.client.post(
+            "/api/analyze-report",
+            data=data,
+            content_type="multipart/form-data"
+        )
+        self.assertEqual(res.status_code, 200)
+        json_data = res.get_json()
+        self.assertEqual(json_data["report_type"], "Medical Photo / Image Report")
+        self.assertIn("primary_condition", json_data)
+        self.assertIn("diet", json_data["primary_condition"])
+        self.assertIn("lifestyle", json_data["primary_condition"])
 
 
 if __name__ == "__main__":

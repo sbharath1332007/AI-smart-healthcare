@@ -20,117 +20,247 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <!-- Form Column -->
         <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-            <h2 class="text-base font-bold text-slate-900 flex items-center border-b border-slate-100 pb-3">
-                <i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-brand-600"></i>
-                Patient Vitals & Symptoms
-            </h2>
+            
+            <!-- Mode Switcher Tabs -->
+            <div class="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                <button type="button" id="tabSymptomsBtn" onclick="switchIntakeMode('symptoms')"
+                        class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 bg-white text-slate-900 shadow-sm">
+                    <i data-lucide="stethoscope" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Describe Symptoms</span>
+                </button>
+                <button type="button" id="tabReportBtn" onclick="switchIntakeMode('report')"
+                        class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 text-slate-600 hover:text-slate-900">
+                    <i data-lucide="file-up" class="w-4 h-4 text-cyan-600"></i>
+                    <span>Upload Report</span>
+                    <span class="ml-1 px-1.5 py-0.5 bg-cyan-100 text-cyan-800 text-[10px] font-extrabold rounded-md">PDF / Photo</span>
+                </button>
+            </div>
 
-            <!-- Patient Vitals -->
-            <div class="grid grid-cols-2 gap-4">
+            <!-- Mode 1: Symptom Intake Form -->
+            <div id="symptomsSection" class="space-y-6">
+                <h2 class="text-base font-bold text-slate-900 flex items-center border-b border-slate-100 pb-3">
+                    <i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-brand-600"></i>
+                    Patient Vitals & Symptoms
+                </h2>
+
+                <!-- Patient Vitals -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Age</label>
+                        <input type="number" id="patientAge" placeholder="e.g. 32" min="1" max="120"
+                               class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Biological Sex</label>
+                        <select id="patientGender" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Not Specified">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Height (cm)</label>
+                        <input type="number" id="patientHeight" placeholder="e.g. 175"
+                               oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Weight (kg)</label>
+                        <input type="number" id="patientWeight" placeholder="e.g. 70"
+                               oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Live BMI Indicator -->
+                <div id="bmiContainer" class="hidden p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center">
+                    <span class="text-slate-600">Calculated BMI: <strong id="bmiValue" class="text-slate-900">-</strong></span>
+                    <span id="bmiBadge" class="px-2 py-0.5 rounded font-semibold text-[11px] bg-cyan-100 text-cyan-800">Normal</span>
+                </div>
+
+                <!-- Pre-existing Conditions -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Age</label>
-                    <input type="number" id="patientAge" placeholder="e.g. 32" min="1" max="120"
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pre-existing Medical History</label>
+                    <input type="text" id="patientPreexisting" placeholder="e.g. Hypertension, Diabetes, Asthma, None"
                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
+
+                <!-- Free Text Problem Description -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Biological Sex</label>
-                    <select id="patientGender" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        <option value="Not Specified">Select...</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">
+                        Describe your health problems & symptoms <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="problemDescription" rows="4"
+                              placeholder="Tell us what you are experiencing in detail... (e.g. 'I have a burning sensation in my chest especially after dinner, sour taste in mouth, bloating, and coughing when lying down for the last 5 days.')"
+                              class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed"></textarea>
                 </div>
+
+                <!-- Quick Symptom Tags -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Height (cm)</label>
-                    <input type="number" id="patientHeight" placeholder="e.g. 175"
-                           oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Weight (kg)</label>
-                    <input type="number" id="patientWeight" placeholder="e.g. 70"
-                           oninput="calculateBMI()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-            </div>
-
-            <!-- Live BMI Indicator -->
-            <div id="bmiContainer" class="hidden p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex justify-between items-center">
-                <span class="text-slate-600">Calculated BMI: <strong id="bmiValue" class="text-slate-900">-</strong></span>
-                <span id="bmiBadge" class="px-2 py-0.5 rounded font-semibold text-[11px] bg-emerald-100 text-emerald-800">Normal</span>
-            </div>
-
-            <!-- Pre-existing Conditions -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Pre-existing Medical History</label>
-                <input type="text" id="patientPreexisting" placeholder="e.g. Hypertension, Diabetes, Asthma, None"
-                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-            </div>
-
-            <!-- Free Text Problem Description -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                    Describe your health problems & symptoms <span class="text-rose-500">*</span>
-                </label>
-                <textarea id="problemDescription" rows="4"
-                          placeholder="Tell us what you are experiencing in detail... (e.g. 'I have a burning sensation in my chest especially after dinner, sour taste in mouth, bloating, and coughing when lying down for the last 5 days.')"
-                          class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed"></textarea>
-            </div>
-
-            <!-- Quick Symptom Tags -->
-            <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-2">Quick Symptom Tags (Click to toggle)</label>
-                <div class="flex flex-wrap gap-1.5" id="symptomChips">
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Heartburn</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Acid Regurgitation</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Headache in Back of Head</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Throbbing Headache</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Dizziness</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Shortness of Breath</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Wheezing</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Thirst</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Frequent Urination</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Abdominal Cramping</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Bloating</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Joint Pain</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Morning Stiffness</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Persistent Cough</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Burning Urination</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Worry</button>
-                    <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Fatigue</button>
-                </div>
-            </div>
-
-            <!-- Severity & Duration -->
-            <div class="space-y-4 pt-2 border-t border-slate-100">
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-semibold text-slate-700">Pain / Severity Level (1 - 10)</label>
-                        <span id="severityLabel" class="text-xs font-bold text-amber-600">5 - Moderate</span>
+                    <label class="block text-xs font-semibold text-slate-700 mb-2">Quick Symptom Tags (Click to toggle)</label>
+                    <div class="flex flex-wrap gap-1.5" id="symptomChips">
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Heartburn</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Acid Regurgitation</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Headache in Back of Head</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Throbbing Headache</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Dizziness</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Shortness of Breath</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Wheezing</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Thirst</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Frequent Urination</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Abdominal Cramping</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Bloating</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Joint Pain</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Morning Stiffness</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Persistent Cough</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Burning Urination</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Excessive Worry</button>
+                        <button type="button" onclick="toggleTag(this)" class="tag-chip px-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors">Fatigue</button>
                     </div>
-                    <input type="range" id="severityRange" min="1" max="10" value="5"
-                           oninput="updateSeverityLabel(this.value)"
-                           class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                </div>
+
+                <!-- Severity & Duration -->
+                <div class="space-y-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-semibold text-slate-700">Pain / Severity Level (1 - 10)</label>
+                            <span id="severityLabel" class="text-xs font-bold text-amber-600">5 - Moderate</span>
+                        </div>
+                        <input type="range" id="severityRange" min="1" max="10" value="5"
+                               oninput="updateSeverityLabel(this.value)"
+                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Duration of Symptoms</label>
+                        <select id="durationSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Less than 24 hours">Less than 24 hours</option>
+                            <option value="1 to 3 days" selected>1 to 3 days</option>
+                            <option value="1 to 2 weeks">1 to 2 weeks</option>
+                            <option value="Several weeks">Several weeks</option>
+                            <option value="Over a month / Chronic">Over a month (Chronic)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="button" id="analyzeBtn" onclick="runHealthAnalysis()"
+                        class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 shadow-md shadow-brand-500/20 transition-all flex items-center justify-center space-x-2">
+                    <i data-lucide="stethoscope" class="w-5 h-5"></i>
+                    <span id="btnText">Run AI Health Evaluation</span>
+                    <div id="btnSpinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </button>
+            </div>
+
+            <!-- Mode 2: Medical Report (PDF or Photo) Upload Form -->
+            <div id="reportUploadSection" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center border-b border-slate-100 pb-3">
+                        <i data-lucide="file-up" class="w-5 h-5 mr-2 text-cyan-600"></i>
+                        Upload Medical Report (PDF or Photo)
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Upload your lab report, blood test, radiology report, or prescription photo. AI will read and evaluate it.
+                    </p>
+                </div>
+
+                <!-- File Drop Zone -->
+                <div id="dropZone"
+                     onclick="document.getElementById('reportFileInput').click()"
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleFileDrop(event)"
+                     class="border-2 border-dashed border-slate-300 hover:border-cyan-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50/60 hover:bg-cyan-50/20 group">
+                    <input type="file" id="reportFileInput" class="hidden"
+                           accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                           onchange="handleFileSelected(this.files)">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 mx-auto flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-sm">
+                        <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-xs font-bold text-slate-900">Click to choose or drag & drop file</p>
+                    <p class="text-[11px] text-slate-500 mt-1">
+                        Accepts PDF documents and photos (PNG, JPG, WEBP up to 16MB)
+                    </p>
+                    <div class="flex items-center justify-center space-x-2 mt-3 text-[10px]">
+                        <span class="px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 font-semibold">Blood Tests</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 font-semibold">Lab Panels</span>
+                        <span class="px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 font-semibold">Imaging / Prescriptions</span>
+                    </div>
+                </div>
+
+                <!-- Selected File Preview Card -->
+                <div id="filePreviewCard" class="hidden p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div id="filePreviewIcon" class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <img id="imageThumbnail" class="hidden w-10 h-10 rounded-lg object-cover border border-slate-200 flex-shrink-0" alt="Thumbnail">
+                        <div class="truncate">
+                            <p id="fileName" class="text-xs font-bold text-slate-900 truncate">report.pdf</p>
+                            <p id="fileSize" class="text-[10px] text-slate-500">1.2 MB</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="clearSelectedFile()" class="p-1.5 text-slate-400 hover:text-rose-600 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Patient Profile for Context -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Patient Age (Optional)</label>
+                        <input type="number" id="reportPatientAge" placeholder="e.g. 35" min="1" max="120"
+                               class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Biological Sex (Optional)</label>
+                        <select id="reportPatientGender" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Not Specified">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Duration of Symptoms</label>
-                    <select id="durationSelect" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        <option value="Less than 24 hours">Less than 24 hours</option>
-                        <option value="1 to 3 days" selected>1 to 3 days</option>
-                        <option value="1 to 2 weeks">1 to 2 weeks</option>
-                        <option value="Several weeks">Several weeks</option>
-                        <option value="Over a month / Chronic">Over a month (Chronic)</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pre-existing Medical Conditions</label>
+                    <input type="text" id="reportPatientPreexisting" placeholder="e.g. Hypertension, Diabetes, Thyroid, None"
+                           class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
-            </div>
 
-            <!-- Submit Button -->
-            <button type="button" id="analyzeBtn" onclick="runHealthAnalysis()"
-                    class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 shadow-md shadow-brand-500/20 transition-all flex items-center justify-center space-x-2">
-                <i data-lucide="stethoscope" class="w-5 h-5"></i>
-                <span id="btnText">Run AI Health Evaluation</span>
-                <div id="btnSpinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            </button>
+                <!-- Additional Context or Patient Question -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">
+                        Doctor's Instructions or Your Notes (Optional)
+                    </label>
+                    <textarea id="reportPatientNotes" rows="3"
+                              placeholder="Any specific questions or context (e.g. 'Fasting test taken for annual checkup', 'Doctor noticed elevated liver values', etc.)"
+                              class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none leading-relaxed"></textarea>
+                </div>
+
+                <!-- Optional Custom Gemini Key Details -->
+                <details class="text-xs text-slate-600 border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                    <summary class="cursor-pointer font-semibold text-indigo-600 flex items-center justify-between">
+                        <span>Optional: Use Custom Gemini AI Vision Key</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </summary>
+                    <div class="mt-2.5 space-y-1.5">
+                        <p class="text-[11px] text-slate-500">
+                            Our hybrid clinical engine runs full diagnostic parsing locally. You can optionally provide a Gemini API key for advanced multimodal vision transcription.
+                        </p>
+                        <input type="password" id="customApiKey" placeholder="AIzaSy..."
+                               class="w-full px-3 py-1.5 text-xs font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </details>
+
+                <!-- Analyze Report Button -->
+                <button type="button" id="analyzeReportBtn" onclick="runReportAnalysis()"
+                        class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 shadow-md shadow-brand-500/20 transition-all flex items-center justify-center space-x-2">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span id="btnReportText">Analyze Medical Report with AI</span>
+                    <div id="btnReportSpinner" class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </button>
+            </div>
         </div>
 
         <!-- Results Column -->
@@ -163,6 +293,33 @@
                             <p class="text-xs font-semibold text-rose-700" id="emergencyAction"></p>
                             <p class="text-[11px] text-rose-600">Emergency numbers: 911 (US/Canada), 112 (EU/India), 999 (UK).</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Uploaded Medical Report Summary & Findings Card -->
+                <div id="uploadedReportMetaCard" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+                                <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900" id="reportDocName">Medical Report</h3>
+                                <span class="text-[11px] text-cyan-700 font-semibold" id="reportDocType">PDF Document</span>
+                            </div>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-cyan-100 text-cyan-900 flex items-center">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 mr-1 text-cyan-600"></i> AI Document Analyzed
+                        </span>
+                    </div>
+
+                    <!-- Structured Lab Findings Grid -->
+                    <div id="labFindingsSection" class="hidden space-y-2.5">
+                        <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center">
+                            <i data-lucide="flask-conical" class="w-4 h-4 mr-1.5 text-cyan-600"></i>
+                            Extracted Laboratory Biomarkers & Test Indicators
+                        </h4>
+                        <div id="labFindingsGrid" class="space-y-2"></div>
                     </div>
                 </div>
 
@@ -346,6 +503,89 @@
 {% block scripts %}
 <script>
     let selectedTags = [];
+    let selectedReportFile = null;
+
+    function switchIntakeMode(mode) {
+        const sympTab = document.getElementById('tabSymptomsBtn');
+        const reportTab = document.getElementById('tabReportBtn');
+        const sympSec = document.getElementById('symptomsSection');
+        const reportSec = document.getElementById('reportUploadSection');
+
+        if (mode === 'symptoms') {
+            sympTab.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 bg-white text-slate-900 shadow-sm';
+            reportTab.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 text-slate-600 hover:text-slate-900';
+            sympSec.classList.remove('hidden');
+            reportSec.classList.add('hidden');
+        } else {
+            reportTab.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 bg-white text-slate-900 shadow-sm';
+            sympTab.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 text-slate-600 hover:text-slate-900';
+            reportSec.classList.remove('hidden');
+            sympSec.classList.add('hidden');
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.add('border-cyan-500', 'bg-cyan-50/40');
+    }
+
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('border-cyan-500', 'bg-cyan-50/40');
+    }
+
+    function handleFileDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('dropZone').classList.remove('border-cyan-500', 'bg-cyan-50/40');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFileSelected(e.dataTransfer.files);
+        }
+    }
+
+    function handleFileSelected(files) {
+        if (!files || files.length === 0) return;
+        const file = files[0];
+
+        if (file.size > 16 * 1024 * 1024) {
+            alert('File size exceeds 16MB limit. Please upload a smaller file.');
+            return;
+        }
+
+        selectedReportFile = file;
+
+        // Display details
+        document.getElementById('fileName').innerText = file.name;
+        const mb = (file.size / (1024 * 1024)).toFixed(2);
+        document.getElementById('fileSize').innerText = `${mb} MB &bull; ${file.type || 'Document'}`;
+
+        const isImg = file.type.startsWith('image/');
+        const imgThumb = document.getElementById('imageThumbnail');
+        const fileIcon = document.getElementById('filePreviewIcon');
+
+        if (isImg) {
+            imgThumb.src = URL.createObjectURL(file);
+            imgThumb.classList.remove('hidden');
+            fileIcon.classList.add('hidden');
+        } else {
+            imgThumb.classList.add('hidden');
+            fileIcon.classList.remove('hidden');
+        }
+
+        document.getElementById('dropZone').classList.add('hidden');
+        document.getElementById('filePreviewCard').classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    function clearSelectedFile() {
+        selectedReportFile = null;
+        document.getElementById('reportFileInput').value = '';
+        document.getElementById('filePreviewCard').classList.add('hidden');
+        document.getElementById('dropZone').classList.remove('hidden');
+        lucide.createIcons();
+    }
 
     function toggleTag(button) {
         const text = button.innerText.trim();
@@ -379,7 +619,7 @@
                 badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-amber-100 text-amber-800';
             } else if (bmi <= 24.9) {
                 badge.innerText = 'Normal (Optimal)';
-                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-emerald-100 text-emerald-800';
+                badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-cyan-100 text-cyan-800';
             } else if (bmi <= 29.9) {
                 badge.innerText = 'Overweight';
                 badge.className = 'px-2 py-0.5 rounded font-semibold text-[11px] bg-amber-100 text-amber-800';
@@ -398,7 +638,7 @@
         let color = 'text-amber-600';
         if (val <= 3) {
             text = `${val} - Mild`;
-            color = 'text-emerald-600';
+            color = 'text-cyan-600';
         } else if (val >= 8) {
             text = `${val} - Severe / Critical`;
             color = 'text-rose-600';
@@ -459,6 +699,51 @@
         }
     }
 
+    async function runReportAnalysis() {
+        if (!selectedReportFile) {
+            alert('Please select or drag & drop a PDF report or medical photo first.');
+            return;
+        }
+
+        const btn = document.getElementById('analyzeReportBtn');
+        const btnText = document.getElementById('btnReportText');
+        const spinner = document.getElementById('btnReportSpinner');
+
+        btn.disabled = true;
+        btnText.innerText = 'Reading & Evaluating Medical Report...';
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData();
+        formData.append('report_file', selectedReportFile);
+        formData.append('age', document.getElementById('reportPatientAge').value);
+        formData.append('gender', document.getElementById('reportPatientGender').value);
+        formData.append('preexisting', document.getElementById('reportPatientPreexisting').value);
+        formData.append('patient_notes', document.getElementById('reportPatientNotes').value);
+        formData.append('api_key', document.getElementById('customApiKey').value);
+        formData.append('save_to_vault', 'true');
+
+        try {
+            const resp = await fetch('/api/analyze-report', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!resp.ok) {
+                const errData = await resp.json();
+                throw new Error(errData.error || 'Failed to analyze uploaded report.');
+            }
+
+            const data = await resp.json();
+            renderResults(data);
+        } catch (err) {
+            alert('Report Analysis Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = 'Analyze Medical Report with AI';
+            spinner.classList.add('hidden');
+        }
+    }
+
     function renderResults(data) {
         document.getElementById('resultsPlaceholder').classList.add('hidden');
         const container = document.getElementById('resultsContainer');
@@ -474,7 +759,51 @@
             emBanner.classList.add('hidden');
         }
 
-        // 2. Primary Condition
+        // 2. Uploaded Report Meta & Lab Findings
+        const reportMetaCard = document.getElementById('uploadedReportMetaCard');
+        if (data.report_type || data.filename) {
+            reportMetaCard.classList.remove('hidden');
+            document.getElementById('reportDocName').innerText = data.filename || 'Medical Document';
+            document.getElementById('reportDocType').innerText = data.report_type || 'Clinical Document';
+
+            const labSection = document.getElementById('labFindingsSection');
+            const labGrid = document.getElementById('labFindingsGrid');
+            labGrid.innerHTML = '';
+
+            if (data.lab_findings && data.lab_findings.length > 0) {
+                labSection.classList.remove('hidden');
+                data.lab_findings.forEach(f => {
+                    const div = document.createElement('div');
+                    let statusColor = 'bg-cyan-100 text-cyan-800 border-cyan-200';
+                    const statLower = (f.status || '').toLowerCase();
+                    if (statLower.includes('high') || statLower.includes('critical') || statLower.includes('diabetic') || statLower.includes('abnormal') || statLower.includes('stage')) {
+                        statusColor = 'bg-rose-100 text-rose-800 border-rose-200';
+                    } else if (statLower.includes('elevated') || statLower.includes('pre-diab')) {
+                        statusColor = 'bg-amber-100 text-amber-800 border-amber-200';
+                    } else if (statLower.includes('low')) {
+                        statusColor = 'bg-blue-100 text-blue-800 border-blue-200';
+                    }
+
+                    div.className = 'p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1';
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-900">${f.marker}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${statusColor}">
+                                ${f.status} (${f.value})
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 leading-relaxed">${f.interpretation}</p>
+                    `;
+                    labGrid.appendChild(div);
+                });
+            } else {
+                labSection.classList.add('hidden');
+            }
+        } else {
+            reportMetaCard.classList.add('hidden');
+        }
+
+        // 3. Primary Condition
         const prime = data.primary_condition;
         document.getElementById('resultCategory').innerText = prime.category;
         document.getElementById('resultConditionName').innerText = prime.name;
@@ -506,44 +835,50 @@
         // Solutions
         const solList = document.getElementById('resultSolutions');
         solList.innerHTML = '';
-        prime.solutions.forEach(sol => {
-            const li = document.createElement('li');
-            li.className = 'flex items-start space-x-2';
-            li.innerHTML = `<i data-lucide="chevron-right" class="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5"></i><span>${sol}</span>`;
-            solList.appendChild(li);
-        });
+        if (prime.solutions) {
+            prime.solutions.forEach(sol => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start space-x-2';
+                li.innerHTML = `<i data-lucide="chevron-right" class="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5"></i><span>${sol}</span>`;
+                solList.appendChild(li);
+            });
+        }
 
         // Diet
-        const diet = prime.diet;
-        document.getElementById('dietGuideline').innerText = diet.guideline;
+        const diet = prime.diet || {};
+        document.getElementById('dietGuideline').innerText = diet.guideline || 'Nutrient-rich balanced clinical nutrition.';
         
         const eatList = document.getElementById('dietFoodsEat');
         eatList.innerHTML = '';
-        diet.foods_to_eat.forEach(f => {
-            const li = document.createElement('li');
-            li.className = 'flex items-start space-x-2';
-            li.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 text-cyan-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
-            eatList.appendChild(li);
-        });
+        if (diet.foods_to_eat) {
+            diet.foods_to_eat.forEach(f => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start space-x-2';
+                li.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 text-cyan-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
+                eatList.appendChild(li);
+            });
+        }
 
         const avoidList = document.getElementById('dietFoodsAvoid');
         avoidList.innerHTML = '';
-        diet.foods_to_avoid.forEach(f => {
-            const li = document.createElement('li');
-            li.className = 'flex items-start space-x-2';
-            li.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
-            avoidList.appendChild(li);
-        });
+        if (diet.foods_to_avoid) {
+            diet.foods_to_avoid.forEach(f => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start space-x-2';
+                li.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5 text-rose-600 flex-shrink-0 mt-0.5"></i><span>${f}</span>`;
+                avoidList.appendChild(li);
+            });
+        }
 
-        document.getElementById('dietTiming').innerText = diet.meal_timing;
-        document.getElementById('dietHydration').innerText = diet.hydration;
+        document.getElementById('dietTiming').innerText = diet.meal_timing || 'Regular consistent meal timing.';
+        document.getElementById('dietHydration').innerText = diet.hydration || '2.5 Liters of water daily.';
 
         // Lifestyle
-        const life = prime.lifestyle;
-        document.getElementById('lifestyleExercise').innerText = life.exercise;
-        document.getElementById('lifestyleSleep').innerText = life.sleep;
-        document.getElementById('lifestyleStress').innerText = life.stress_management;
-        document.getElementById('lifestyleHabits').innerText = life.habits;
+        const life = prime.lifestyle || {};
+        document.getElementById('lifestyleExercise').innerText = life.exercise || 'Daily moderate physical movement.';
+        document.getElementById('lifestyleSleep').innerText = life.sleep || '7-8 hours of regular restorative sleep.';
+        document.getElementById('lifestyleStress').innerText = life.stress_management || 'Daily stress reduction and breathing.';
+        document.getElementById('lifestyleHabits').innerText = life.habits || 'Consistent daily routines and preventive monitoring.';
 
         // Secondary Possibilities
         const secContainer = document.getElementById('secondaryContainer');

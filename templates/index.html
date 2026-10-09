@@ -11,19 +11,19 @@
                     <span>AI-Powered Medical Decision Support & Care Planner</span>
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-                    Enter Your Symptoms. <br/>
+                    Enter Symptoms or <br/>
                     <span class="bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent">
-                        Get Diagnosis, Care Plans, Diet & Lifestyle Support.
+                        Upload Medical Reports & Photos.
                     </span>
                 </h1>
                 <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
-                    Describe what you're experiencing in plain language. Our clinical intelligence engine analyzes your condition, reveals root causes, provides medical roadmaps, customizes diets and lifestyle habits designed to guide your recovery.
+                    Describe what you're experiencing or upload any medical report (PDF or lab photo). Our clinical intelligence engine extracts markers, assesses conditions, provides medical roadmaps, customizes diets and lifestyle habits designed to guide your recovery.
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
                     <a href="/analyze" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 shadow-lg shadow-brand-500/25 transition-all transform hover:-translate-y-0.5">
                         <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
-                        Start Health Checkup
+                        Start Health or Report Analysis
                     </a>
                     {% if not current_user %}
                     <a href="/auth/register" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 shadow-sm transition-all">
@@ -129,11 +129,11 @@
             <!-- Feature 1 -->
             <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-300 transition-all group">
                 <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                    <i data-lucide="file-search" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">1. AI Problem Detection</h3>
+                <h3 class="text-base font-bold text-slate-900 mb-2">1. Dual-Intake Intelligence</h3>
                 <p class="text-xs text-slate-600 leading-relaxed">
-                    Natural language symptom extraction with Bayesian clinical weights and emergency red-flag screening for immediate triage.
+                    Symptom evaluation or automated upload analysis of medical lab PDF documents and prescription/test photos with marker extraction.
                 </p>
             </div>
 
