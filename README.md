@@ -1,6 +1,19 @@
 # AI Smart Healthcare
 
-An intelligent, privacy-preserving clinical decision-support and lifestyle medicine platform. Clients describe their symptoms in natural language or structured tags; the AI identifies probable health conditions, delivers an in-depth clinical explanation of what is occurring in the body, charts actionable solutions, and formulates tailored dietary and lifestyle prescriptions—all safeguarded by **AES-256 end-to-end authenticated data encryption**.
+An intelligent, privacy-preserving clinical decision-support and lifestyle medicine platform. Clients describe their symptoms via **hands-free AI voice assistance**, plain text, or by **uploading medical reports (PDF/Photo)**; the AI extracts markers, identifies probable health conditions, delivers an in-depth clinical explanation of what is occurring in the body, charts actionable solutions, and formulates tailored dietary and lifestyle prescriptions—all safeguarded by **AES-256 end-to-end authenticated data encryption**.
+
+[![Live Public Demo](https://img.shields.io/badge/Live%20Demo-trycloudflare.com-success?style=for-the-badge&logo=cloudflare)](https://benefit-army-must-indicated.trycloudflare.com)
+[![Deploy to Render](https://img.shields.io/badge/Deploy%20to-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/deploy?repo=https://github.com/sbharath1332007/AI-smart-healthcare)
+[![Deploy on Railway](https://img.shields.io/badge/Deploy%20on-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app/new/template?template=https://github.com/sbharath1332007/AI-smart-healthcare)
+
+---
+
+## 🌐 Live Access & Deployment
+
+- **Instant Public Web URL**: [https://benefit-army-must-indicated.trycloudflare.com](https://benefit-army-must-indicated.trycloudflare.com)
+- **GitHub Repository**: [https://github.com/sbharath1332007/AI-smart-healthcare](https://github.com/sbharath1332007/AI-smart-healthcare)
+- **1-Click Render Deploy**: Click the **Deploy to Render** badge above or connect your GitHub repository in [Render.com](https://render.com) using the included `render.yaml` blueprint.
+- **Docker / Container Deploy**: Includes pre-configured `Dockerfile` with multi-worker Gunicorn server ready for Railway, Fly.io, or AWS ECS.
 
 ---
 
