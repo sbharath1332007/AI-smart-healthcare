@@ -290,6 +290,52 @@ class TestAISmartHealthcare(unittest.TestCase):
         self.assertIn("diet", json_data["primary_condition"])
         self.assertIn("lifestyle", json_data["primary_condition"])
 
+    def test_14_voice_assistant_engine_spoken_script(self):
+        """Test voice assistant engine script generation."""
+        from engine.voice_assistant import generate_spoken_voice_script
+        sample_result = {
+            "primary_condition": {
+                "name": "Hypertension (Stage 1)",
+                "confidence_score": 92.5,
+                "urgency": "Urgent",
+                "specialist": "Cardiologist",
+                "explanation": "Elevated arterial blood pressure detected. Requires dietary salt limitation and cardiovascular monitoring.",
+                "solutions": ["Schedule blood pressure recheck with GP", "DASH dietary transition"],
+                "diet": {
+                    "guideline": "Follow DASH diet with potassium-rich foods.",
+                    "foods_to_eat": ["Bananas", "Spinach", "Avocados"],
+                    "foods_to_avoid": ["Canned soups", "High sodium snacks"]
+                },
+                "lifestyle": {
+                    "habits": "30 minutes daily aerobic walking and stress reduction."
+                }
+            }
+        }
+        script = generate_spoken_voice_script(sample_result)
+        self.assertIn("Hypertension", script)
+        self.assertIn("Cardiologist", script)
+        self.assertIn("DASH", script)
+        self.assertIn("Bananas", script)
+
+    def test_15_voice_assistant_api_endpoint(self):
+        """Test /api/analyze-voice endpoint with spoken problem description."""
+        res = self.client.post(
+            "/api/analyze-voice",
+            json={
+                "spoken_text": "I have severe throat burning and sour acid regurgitation when lying down at night",
+                "age": 35,
+                "gender": "Male"
+            }
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertTrue(data.get("is_voice_consultation"))
+        self.assertIn("Gastroesophageal Reflux", data["primary_condition"]["name"])
+        self.assertIn("voice_summary_spoken", data)
+        self.assertIn("diet", data["primary_condition"])
+        self.assertIn("lifestyle", data["primary_condition"])
+
 
 if __name__ == "__main__":
     unittest.main()
+

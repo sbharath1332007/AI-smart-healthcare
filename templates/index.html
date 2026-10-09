@@ -11,19 +11,19 @@
                     <span>AI-Powered Medical Decision Support & Care Planner</span>
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-                    Enter Symptoms or <br/>
-                    <span class="bg-gradient-to-r from-brand-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent">
-                        Upload Medical Reports & Photos.
+                    Speak Symptoms, Type, or <br/>
+                    <span class="bg-gradient-to-r from-rose-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent">
+                        Upload Reports & Lab Photos.
                     </span>
                 </h1>
                 <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
-                    Describe what you're experiencing or upload any medical report (PDF or lab photo). Our clinical intelligence engine extracts markers, assesses conditions, provides medical roadmaps, customizes diets and lifestyle habits designed to guide your recovery.
+                    Tell your problem with hands-free AI Voice Assistance, enter symptoms, or upload medical reports (PDFs/Photos). Our clinical intelligence engine analyzes your condition, provides medical roadmaps, customizes diets and lifestyle habits designed to guide your recovery.
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4 pt-2">
-                    <a href="/analyze" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-brand-600 to-cyan-600 hover:from-brand-700 hover:to-cyan-700 shadow-lg shadow-brand-500/25 transition-all transform hover:-translate-y-0.5">
-                        <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
-                        Start Health or Report Analysis
+                    <a href="/analyze" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-rose-600 via-indigo-600 to-cyan-600 hover:from-rose-700 hover:to-cyan-700 shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5">
+                        <i data-lucide="mic" class="w-5 h-5 mr-2"></i>
+                        Start Voice or Health Checkup
                     </a>
                     {% if not current_user %}
                     <a href="/auth/register" class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-base font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 shadow-sm transition-all">
@@ -128,12 +128,12 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <!-- Feature 1 -->
             <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-brand-300 transition-all group">
-                <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center mb-4 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-                    <i data-lucide="file-search" class="w-6 h-6"></i>
+                <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                    <i data-lucide="mic-vocal" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-base font-bold text-slate-900 mb-2">1. Dual-Intake Intelligence</h3>
+                <h3 class="text-base font-bold text-slate-900 mb-2">1. Voice, Text & Report Intake</h3>
                 <p class="text-xs text-slate-600 leading-relaxed">
-                    Symptom evaluation or automated upload analysis of medical lab PDF documents and prescription/test photos with marker extraction.
+                    Speak your symptoms hands-free with real-time speech transcription, type clinical descriptions, or upload medical PDF reports & test photos.
                 </p>
             </div>
 

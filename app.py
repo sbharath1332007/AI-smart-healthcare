@@ -13,6 +13,7 @@ from database.db import (
 )
 from engine.ai_analyzer import analyze_health_problem
 from engine.report_analyzer import analyze_uploaded_medical_report
+from engine.voice_assistant import process_voice_consultation, generate_spoken_voice_script
 from security.auth import login_required
 from security.crypto import anonymize_text
 from werkzeug.utils import secure_filename
@@ -96,6 +97,7 @@ def api_analyze():
 
     analysis_result["saved_record_id"] = saved_record_id
     analysis_result["is_encrypted_at_rest"] = bool(saved_record_id)
+    analysis_result["voice_summary_spoken"] = generate_spoken_voice_script(analysis_result)
     return jsonify(analysis_result)
 
 
@@ -150,6 +152,84 @@ def api_analyze_report():
                 "lab_findings": analysis_result.get("lab_findings", []),
                 "report_filename": filename,
                 "report_type": analysis_result.get("report_type"),
+                "ai_notes": analysis_result.get("ai_enhanced_notes")
+            },
+            diet_data=analysis_result["primary_condition"]["diet"],
+            lifestyle_data=analysis_result["primary_condition"]["lifestyle"],
+            urgency_level=urgency
+        )
+
+    analysis_result["saved_record_id"] = saved_record_id
+    analysis_result["is_encrypted_at_rest"] = bool(saved_record_id)
+    analysis_result["voice_summary_spoken"] = generate_spoken_voice_script(analysis_result)
+    return jsonify(analysis_result)
+
+
+@app.route("/api/analyze-voice", methods=["POST"])
+def api_analyze_voice():
+    """Process user spoken consultation or audio recording."""
+    audio_bytes = None
+    mime_type = None
+    spoken_text = ""
+    user_profile = {}
+    gemini_key = ""
+    save_to_vault = True
+    anonymize = False
+
+    if request.is_json:
+        data = request.get_json() or {}
+        spoken_text = data.get("spoken_text", "").strip()
+        user_profile = {
+            "age": data.get("age", ""),
+            "gender": data.get("gender", ""),
+            "preexisting": data.get("preexisting", "")
+        }
+        gemini_key = data.get("api_key", "").strip()
+        save_to_vault = data.get("save_to_vault", True)
+        anonymize = data.get("anonymize_mode", False)
+    else:
+        spoken_text = request.form.get("spoken_text", "").strip()
+        user_profile = {
+            "age": request.form.get("age", ""),
+            "gender": request.form.get("gender", ""),
+            "preexisting": request.form.get("preexisting", "")
+        }
+        gemini_key = request.form.get("api_key", "").strip()
+        save_to_vault = request.form.get("save_to_vault", "true").lower() == "true"
+        anonymize = request.form.get("anonymize_mode", "false").lower() == "true"
+
+        if "voice_audio" in request.files:
+            file = request.files["voice_audio"]
+            if file and file.filename != "":
+                audio_bytes = file.read()
+                mime_type = file.mimetype or "audio/webm"
+
+    if not spoken_text and not audio_bytes:
+        return jsonify({"error": "No voice recording or spoken problem description was received. Please speak into the microphone."}), 400
+
+    if anonymize and spoken_text:
+        spoken_text = anonymize_text(spoken_text)
+
+    analysis_result = process_voice_consultation(
+        spoken_text=spoken_text,
+        audio_bytes=audio_bytes,
+        mime_type=mime_type,
+        user_profile=user_profile,
+        gemini_api_key=gemini_key
+    )
+
+    saved_record_id = None
+    if "user_id" in session and save_to_vault and not anonymize:
+        urgency = "Emergency" if analysis_result.get("emergency_alert") else analysis_result["primary_condition"]["urgency"]
+        narrative = f"[Voice Consultation] " + (spoken_text or analysis_result.get("transcribed_text", "") or analysis_result["primary_condition"]["name"])
+        saved_record_id = save_consultation(
+            user_id=session["user_id"],
+            symptoms_text=narrative,
+            diagnosis_data={
+                "primary": analysis_result["primary_condition"],
+                "secondary": analysis_result.get("secondary_possibilities", []),
+                "symptoms": analysis_result.get("extracted_symptoms", []),
+                "voice_transcription": analysis_result.get("transcribed_text", spoken_text),
                 "ai_notes": analysis_result.get("ai_enhanced_notes")
             },
             diet_data=analysis_result["primary_condition"]["diet"],
